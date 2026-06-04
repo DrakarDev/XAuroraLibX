@@ -22,7 +22,7 @@ end)
 if ok and type(res) == "table" then
     Aurora = res
 else
-    Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/AuroraLibs/refs/heads/main/AuroraLibrary.lua"))()
+    Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"))()
 end
 
 
@@ -232,7 +232,7 @@ SecWelcome:AddSeparator("DEVELOPER ZONE")
 
 SecWelcome:AddCode("LoadStringCode", {
     Title = "How to run AuroraLib",
-    Code = 'local Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/AuroraLib/main/AuroraLibrary.lua"))()'
+    Code = 'local Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"))()'
 })
 
 local SecNotifDemo = HomeLeft:AddSection("Notification Showcase")

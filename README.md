@@ -30,7 +30,7 @@ Load the library directly from GitHub in your executor:
 
 ```lua
 local Aurora = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/DrakarDev/AuroraLibs/refs/heads/main/AuroraLibrary.lua"
+    "https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"
 ))()
 ```
 
