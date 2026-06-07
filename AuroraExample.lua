@@ -6,9 +6,12 @@
     Demonstrates:
     - Grab-and-drag Edge Resizing
     - SaveManager (Configuration Saving, Loading, Autoloading)
-    - Horizontal Scrollable SubTabs (with red underline sliding animation)
-    - Dynamic RGB/Chroma Theme and Ocean Theme
-    - New Advanced Components: Divider, Space, Image, Audio Player, Code Blocks
+    - Game-specific isolated configurations
+    - Online cloud sharing via keyless kvdb.io buckets
+    - Clipboard backup export/import tools
+    - Horizontal Scrollable SubTabs (with sliding underline animation)
+    - Dynamic RGB/Chroma Theme and preset options
+    - Progressive lazy rendering by default
 ================================================================================
 ]]
 
@@ -17,15 +20,13 @@
 -- Falls back to GitHub if the local file is not present.
 local Aurora
 local ok, res = pcall(function()
-    return loadstring(readfile("AuroraLibrary.lua"))()
+    return loadstring(readfile("AuroraLibraryReal.lua"))()
 end)
 if ok and type(res) == "table" then
     Aurora = res
 else
     Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"))()
 end
-
-
 
 -- 1. CUSTOM THEME REGISTRATION
 -- Register a custom neon amethyst theme programmatically
@@ -62,16 +63,16 @@ local Window = Aurora:CreateWindow({
     SubTitle    = "Booga Booga Reborn Edition",
     Theme       = "Dark",
     Size        = UDim2.fromOffset(800, 560),
-    MinimizeKey = Enum.KeyCode.RightControl,
-    Acrylic     = true, -- Enables the premium glass/acrylic blur background
-    MobileButton = true, -- Forces the mobile float toggle button to show
+    MinimizeKey = Enum.KeyCode.LeftShift, -- Preset to LeftShift by default on PC
+    Acrylic     = true,                  -- Enables the premium glass/acrylic blur background
+    MobileButton = true,                 -- Forces the mobile float toggle button to show
     MobileButtonIcon = "solar/star-bold",
     MobileButtonPosition = UDim2.new(0, 20, 0, 150),
-    LazyLoad    = true,         -- Enables progressive loading of elements to eliminate lag
-    DelayPerElement = 0.015,    -- Delay between rendering each element
-    DelayPerSection = 0.02,     -- Delay between rendering each section
-    DelayPerTab     = 0.05,     -- Delay between rendering each tab
-    FadeIn      = true,         -- Elements smoothly fade in as they render
+    LazyLoad    = true,                  -- Enables progressive rendering (default)
+    DelayPerElement = 0.01,
+    DelayPerSection = 0.03,
+    DelayPerTab     = 0.08,
+    FadeIn      = true,
 })
 
 -- 3. HUD OVERLAYS INITIALIZATION
@@ -101,7 +102,7 @@ local HomeLeft, HomeRight = HomeTab:AddColumns()
 local SecWelcome = HomeLeft:AddSection("Welcome to Aurora")
 SecWelcome:AddParagraph({
     Title = "AuroraLib Premium",
-    Content = "The next-generation UI library for Roblox. Fully supports edge-dragging to resize from any side, native configuration saving, and progressive rendering."
+    Content = "The next-generation UI library for Roblox. Fully supports edge-dragging to resize from any side, native local and cloud configuration sharing, and progressive rendering."
 })
 SecWelcome:AddSpace(8)
 local MyLabel = SecWelcome:AddLabel("StatusLabel", "System Status: Operating normally")
@@ -238,7 +239,7 @@ SecWelcome:AddCode("LoadStringCode", {
 local SecNotifDemo = HomeLeft:AddSection("Notification Showcase")
 SecNotifDemo:AddParagraph({
     Title = "Interactive & Actionable Notifications",
-    Content = "Test our upgraded notification system featuring spring bouncy entries, custom sound presets, automatic card collapsing (avoiding list jumps), inline inputs, and dynamic updates."
+    Content = "Test our upgraded notification system featuring spring bouncy entries, custom sound presets, automatic card collapsing, inline inputs, and dynamic updates."
 })
 
 SecNotifDemo:AddButton({
@@ -273,7 +274,7 @@ SecNotifDemo:AddButton({
             Title = "Assets Downloading",
             Content = "Initializing assets streaming...",
             Type = "Info",
-            Duration = 0, -- Don't auto-close automatically, we control it
+            Duration = 0,
             PlaySound = true
         })
         
@@ -290,7 +291,7 @@ SecNotifDemo:AddButton({
                 Title = "Download Completed",
                 Content = "All assets successfully loaded into workspace cache.",
                 Type = "Success",
-                Duration = 4, -- Set auto-close duration of 4 seconds now
+                Duration = 4,
                 Buttons = {
                     {
                         Title = "Sweet!"
@@ -336,49 +337,23 @@ SecNotifDemo:AddButton({
     end
 })
 
-SecNotifDemo:AddButton({
-    Title = "Trigger Warning Alert",
-    Icon = "solar/danger-bold",
-    Callback = function()
-        Aurora:Notify({
-            Title = "System Warning",
-            Content = "High resource consumption detected. Please monitor client FPS.",
-            Type = "Warning",
-            Duration = 5
-        })
-    end
-})
-
-SecNotifDemo:AddButton({
-    Title = "Trigger Error Alert",
-    Icon = "solar/close-circle-bold",
-    Callback = function()
-        Aurora:Notify({
-            Title = "Critical Error",
-            Content = "Failed to communicate with remote server. Trying to reconnect...",
-            Type = "Error",
-            Duration = 4
-        })
-    end
-})
-
 -- Right Column: Media (Image & Audio & Video)
 local SecMedia = HomeRight:AddSection("Media Elements", { Collapsible = true, DefaultExpanded = true })
 SecMedia:AddImage("LogoImage", {
     Size = UDim2.fromOffset(180, 100),
-    Image = "rbxassetid://10849890695" -- Cool galaxy asset
+    Image = "rbxassetid://10849890695"
 })
 SecMedia:AddSpace(10)
 SecMedia:AddAudio("RetroSound", {
     Title = "Retro Ambient Music",
-    SoundId = 1843431602, -- Roblox loopable soundtrack ID
+    SoundId = 1843431602,
     Volume = 0.5,
     Looped = true
 })
 SecMedia:AddSpace(10)
 SecMedia:AddVideo("DemoVideo", {
     Title = "Premium Video Showcase",
-    Video = 5608688234, -- Roblox video asset ID
+    Video = 5608688234,
     Volume = 0.3,
     Looped = true,
     AutoPlay = true,
@@ -418,7 +393,7 @@ SecMining:AddToggle("TgtResources", { Title="Filter: Resources", Default=true })
 
 -- Right Column: KillAura & Aiming Options
 local SecMelee = CmbRight:AddSection("Melee Combat")
-local KillTgl = SecMelee:AddToggle("KillAura", { Title="Kill Aura", Tooltip="When enabled, automatically attacks hostile animals and nearby players." })
+local KillTgl = SecMemelee or SecMelee:AddToggle("KillAura", { Title="Kill Aura", Tooltip="When enabled, automatically attacks hostile animals and nearby players." })
 KillTgl:AddKeybind("KillAuraBind", { Default=Enum.KeyCode.G })
 SecMelee:AddSlider("KillRange", { Title="Kill Range (studs)", Tooltip="The maximum combat reach in studs for attacking targets.", Min=0, Max=30, Default=8, Suffix=" studs" })
 
@@ -499,7 +474,7 @@ Aurora.SaveManager:BuildConfigSection(SecConfig)
 -- ================================================================================
 Aurora:Notify({
     Title    = "Aurora Loaded!",
-    Content  = "Press RightControl to hide or show the GUI.",
+    Content  = "Press LeftShift to hide or show the GUI.",
     Type     = "Success",
     Duration = 5
 })
