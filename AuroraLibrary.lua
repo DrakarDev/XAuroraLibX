@@ -5281,6 +5281,474 @@ function SaveManager:BuildConfigSection(sec)
     })
 end
 
+-- ================================================================================
+--  KEY SYSTEM
+-- ================================================================================
+local KeySystem = {}
+KeySystem.__index = KeySystem
+
+function KeySystem.new(cfg)
+    cfg = cfg or {}
+    local self = setmetatable({}, KeySystem)
+    self.Title = cfg.Title or "Key System"
+    self.SubTitle = cfg.SubTitle or "Verification Required"
+    self.Note = cfg.Note or "Please enter your access key below."
+    self.Keys = cfg.Keys or {}
+    self.KeyLink = cfg.KeyLink or ""
+    self.SaveKey = cfg.SaveKey ~= false
+    self.FileName = cfg.FileName or "AuroraKey.txt"
+    self.OnSuccess = cfg.OnSuccess or function() end
+    self.CustomValidate = cfg.CustomValidate -- optional function(key) -> bool
+    
+    local isfile = isfile or function() return false end
+    local readfile = readfile or function() return "" end
+    local writefile = writefile or function() end
+
+    -- Check if key matches local list or custom validation function
+    local function validateKey(key)
+        if self.CustomValidate then
+            local ok, res = pcall(self.CustomValidate, key)
+            if ok and res then return true end
+        end
+        for _, k in ipairs(self.Keys) do
+            if k == key then return true end
+        end
+        return false
+    end
+    
+    -- Auto-validation
+    if self.SaveKey and isfile(self.FileName) then
+        local cachedKey = readfile(self.FileName)
+        if validateKey(cachedKey) then
+            task.spawn(self.OnSuccess)
+            return self
+        end
+    end
+    
+    -- Create prompt UI
+    local thm = Aurora.Theme or Aurora.Themes.Dark
+    local keyGui = make("ScreenGui", { Name = "AuroraKeySystem", ResetOnSpawn = false, DisplayOrder = 100000 })
+    safeParent(keyGui)
+    
+    local mainFrame = make("Frame", {
+        Size = UDim2.fromOffset(s(380), s(280)),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = thm.Background,
+        BackgroundTransparency = 0.05,
+        Parent = keyGui
+    })
+    createAcrylic(mainFrame)
+    make("UICorner", { CornerRadius = sz(16), Parent = mainFrame })
+    local mainStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = mainFrame })
+    
+    -- Dragging support for KeySystem main frame
+    local dragInput, dragStart, startPos
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragStart = nil
+                end
+            end)
+        end
+    end)
+    mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragStart then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    -- Topbar title/subtitle
+    local titleLbl = make("TextLabel", {
+        Size = UDim2.new(1, -s(24), 0, s(28)),
+        Position = UDim2.new(0, s(12), 0, s(12)),
+        BackgroundTransparency = 1,
+        Text = self.Title,
+        TextColor3 = thm.Text,
+        TextSize = fs(18),
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = mainFrame
+    })
+    
+    local subLbl = make("TextLabel", {
+        Size = UDim2.new(1, -s(24), 0, s(18)),
+        Position = UDim2.new(0, s(12), 0, s(38)),
+        BackgroundTransparency = 1,
+        Text = self.SubTitle,
+        TextColor3 = thm.SubText,
+        TextSize = fs(11),
+        Font = Enum.Font.GothamMedium,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = mainFrame
+    })
+    
+    -- Divider line
+    make("Frame", {
+        Size = UDim2.new(1, -s(24), 0, 1),
+        Position = UDim2.new(0, s(12), 0, s(64)),
+        BackgroundColor3 = thm.Border,
+        BorderSizePixel = 0,
+        Parent = mainFrame
+    })
+    
+    -- Note/Instructions
+    local noteLbl = make("TextLabel", {
+        Size = UDim2.new(1, -s(24), 0, s(40)),
+        Position = UDim2.new(0, s(12), 0, s(75)),
+        BackgroundTransparency = 1,
+        Text = self.Note,
+        TextColor3 = thm.SubText,
+        TextSize = fs(11),
+        Font = Enum.Font.Gotham,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextWrapped = true,
+        Parent = mainFrame
+    })
+    
+    -- Input field background
+    local inputBG = make("Frame", {
+        Size = UDim2.new(1, -s(24), 0, s(36)),
+        Position = UDim2.new(0, s(12), 0, s(125)),
+        BackgroundColor3 = thm.InputBG,
+        BorderSizePixel = 0,
+        Parent = mainFrame
+    })
+    make("UICorner", { CornerRadius = sz(8), Parent = inputBG })
+    local inputStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = inputBG })
+    
+    local textBox = make("TextBox", {
+        Size = UDim2.new(1, -s(16), 1, 0),
+        Position = UDim2.new(0, s(8), 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        PlaceholderText = "Enter key here...",
+        PlaceholderColor3 = thm.SubText,
+        TextColor3 = thm.Text,
+        TextSize = fs(13),
+        Font = Enum.Font.Gotham,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = inputBG
+    })
+    
+    -- Button Frame
+    local btnFrame = make("Frame", {
+        Size = UDim2.new(1, -s(24), 0, s(36)),
+        Position = UDim2.new(0, s(12), 0, s(180)),
+        BackgroundTransparency = 1,
+        Parent = mainFrame
+    })
+    
+    -- Verify Button
+    local verifyBtn = make("TextButton", {
+        Size = UDim2.new(0.5, -s(6), 1, 0),
+        BackgroundColor3 = thm.Accent,
+        Text = "Verify Key",
+        TextColor3 = thm.Text,
+        TextSize = fs(12),
+        Font = Enum.Font.GothamBold,
+        AutoButtonColor = false,
+        Parent = btnFrame
+    })
+    make("UICorner", { CornerRadius = sz(8), Parent = verifyBtn })
+    
+    -- Get Key Button (or Copy Link)
+    local getBtn = make("TextButton", {
+        Size = UDim2.new(0.5, -s(6), 1, 0),
+        Position = UDim2.new(0.5, s(6), 0, 0),
+        BackgroundColor3 = thm.Element,
+        Text = "Get Key",
+        TextColor3 = thm.Text,
+        TextSize = fs(12),
+        Font = Enum.Font.GothamBold,
+        AutoButtonColor = false,
+        Parent = btnFrame
+    })
+    make("UICorner", { CornerRadius = sz(8), Parent = getBtn })
+    local getStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = getBtn })
+    
+    -- Status Label
+    local statusLbl = make("TextLabel", {
+        Size = UDim2.new(1, -s(24), 0, s(20)),
+        Position = UDim2.new(0, s(12), 0, s(230)),
+        BackgroundTransparency = 1,
+        Text = "",
+        TextColor3 = thm.AlertSuccess,
+        TextSize = fs(11),
+        Font = Enum.Font.GothamMedium,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = mainFrame
+    })
+    
+    -- Button Hover effects
+    local function addBtnEffect(btn, bgNormal, bgHover)
+        btn.MouseEnter:Connect(function()
+            tw(btn, { BackgroundColor3 = bgHover }, 0.15)
+        end)
+        btn.MouseLeave:Connect(function()
+            tw(btn, { BackgroundColor3 = bgNormal }, 0.15)
+        end)
+    end
+    addBtnEffect(verifyBtn, thm.Accent, thm.AccentDim)
+    addBtnEffect(getBtn, thm.Element, thm.ElementHover)
+    
+    -- Functionality
+    verifyBtn.MouseButton1Click:Connect(function()
+        local inputKey = textBox.Text:gsub("%s+", "")
+        if inputKey == "" then
+            statusLbl.TextColor3 = thm.AlertError
+            statusLbl.Text = "Please enter a key!"
+            return
+        end
+        statusLbl.TextColor3 = thm.SubText
+        statusLbl.Text = "Verifying..."
+        
+        task.wait(0.5)
+        
+        if validateKey(inputKey) then
+            statusLbl.TextColor3 = thm.AlertSuccess
+            statusLbl.Text = "Key Verified! Loading script..."
+            if self.SaveKey and writefile then
+                pcall(writefile, self.FileName, inputKey)
+            end
+            task.wait(0.5)
+            tw(mainFrame, { Size = UDim2.fromOffset(0, 0), BackgroundTransparency = 1 }, 0.3)
+            task.wait(0.3)
+            keyGui:Destroy()
+            task.spawn(self.OnSuccess)
+        else
+            statusLbl.TextColor3 = thm.AlertError
+            statusLbl.Text = "Invalid Key! Please try again."
+        end
+    end)
+    
+    getBtn.MouseButton1Click:Connect(function()
+        if self.KeyLink ~= "" then
+            pcall(function()
+                local setClipboard = setclipboard or toclipboard or set_clipboard
+                if setClipboard then
+                    setClipboard(self.KeyLink)
+                    statusLbl.TextColor3 = thm.AlertInfo
+                    statusLbl.Text = "Key link copied to clipboard!"
+                else
+                    statusLbl.TextColor3 = thm.AlertError
+                    statusLbl.Text = "Clipboard not supported!"
+                end
+            end)
+        else
+            statusLbl.TextColor3 = thm.AlertError
+            statusLbl.Text = "No key link specified!"
+        end
+    end)
+    
+    return self
+end
+
+Aurora.KeySystem = KeySystem
+
+-- ================================================================================
+--  HUD OVERLAY
+-- ================================================================================
+local HUD = {}
+HUD.__index = HUD
+
+function Aurora:CreateHUD(cfg)
+    cfg = cfg or {}
+    local self = setmetatable({}, HUD)
+    local thm = Aurora.Theme or Aurora.Themes.Dark
+    
+    local hudGui = make("ScreenGui", { Name = "AuroraHUD", ResetOnSpawn = false, DisplayOrder = 9998 })
+    safeParent(hudGui)
+    self.Gui = hudGui
+    
+    local frame = make("Frame", {
+        Size = UDim2.fromOffset(s(cfg.Width or 220), 0),
+        Position = cfg.Position or UDim2.new(0, s(20), 0, s(20)),
+        BackgroundColor3 = thm.Background,
+        BackgroundTransparency = 0.1,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        Parent = hudGui
+    })
+    createAcrylic(frame)
+    make("UICorner", { CornerRadius = sz(12), Parent = frame })
+    local stroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = frame })
+    self.Frame = frame
+    
+    -- Dragging
+    local dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragStart = nil
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragStart then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    -- Header
+    local title = make("TextLabel", {
+        Size = UDim2.new(1, -s(24), 0, s(30)),
+        Position = UDim2.new(0, s(12), 0, 0),
+        BackgroundTransparency = 1,
+        Text = cfg.Title or "Aurora HUD",
+        TextColor3 = thm.Text,
+        TextSize = fs(13),
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = frame
+    })
+    
+    local list = make("Frame", {
+        Size = UDim2.new(1, -s(24), 0, 0),
+        Position = UDim2.new(0, s(12), 0, s(32)),
+        BackgroundTransparency = 1,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        Parent = frame
+    })
+    make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(4), Parent = list })
+    make("UIPadding", { PaddingBottom = sz(12), Parent = list })
+    
+    self.List = list
+    self.Items = {}
+    
+    return self
+end
+
+function HUD:SetItem(id, value)
+    local thm = Aurora.Theme or Aurora.Themes.Dark
+    local item = self.Items[id]
+    if not item then
+        local container = make("Frame", {
+            Size = UDim2.new(1, 0, 0, s(22)),
+            BackgroundTransparency = 1,
+            Parent = self.List
+        })
+        
+        local label = make("TextLabel", {
+            Size = UDim2.new(0.5, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = tostring(id),
+            TextColor3 = thm.SubText,
+            TextSize = fs(11),
+            Font = Enum.Font.GothamMedium,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = container
+        })
+        
+        local valLabel = make("TextLabel", {
+            Size = UDim2.new(0.5, 0, 1, 0),
+            Position = UDim2.new(0.5, 0, 0, 0),
+            BackgroundTransparency = 1,
+            Text = tostring(value),
+            TextColor3 = thm.Text,
+            TextSize = fs(11),
+            Font = Enum.Font.GothamBold,
+            TextXAlignment = Enum.TextXAlignment.Right,
+            Parent = container
+        })
+        
+        item = { container = container, label = label, valLabel = valLabel }
+        self.Items[id] = item
+    else
+        item.valLabel.Text = tostring(value)
+    end
+end
+
+function HUD:Toggle(bool)
+    self.Frame.Visible = bool
+end
+
+-- ================================================================================
+--  PROGRESS BAR ELEMENT
+-- ================================================================================
+function Section:AddProgressBar(id, cfg)
+    cfg = cfg or {}
+    local thm = Aurora.Theme or Aurora.Themes.Dark
+    local f = elemFrame(self.Container)
+    
+    local titleLbl = make("TextLabel", {
+        Size = UDim2.new(1, 0, 0, s(16)),
+        BackgroundTransparency = 1,
+        Text = cfg.Title or "Progress Bar",
+        TextColor3 = thm.Text,
+        TextSize = fs(11),
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = f
+    })
+    
+    local track = make("Frame", {
+        Size = UDim2.new(1, 0, 0, s(8)),
+        BackgroundColor3 = thm.InputBG,
+        BorderSizePixel = 0,
+        Parent = f
+    })
+    make("UICorner", { CornerRadius = sz(4), Parent = track })
+    local stroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = track })
+    
+    local fill = make("Frame", {
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = thm.Accent,
+        BorderSizePixel = 0,
+        Parent = track
+    })
+    make("UICorner", { CornerRadius = sz(4), Parent = fill })
+    
+    local valLbl = make("TextLabel", {
+        Size = UDim2.new(1, 0, 0, s(12)),
+        BackgroundTransparency = 1,
+        Text = "0%",
+        TextColor3 = thm.SubText,
+        TextSize = fs(9),
+        Font = Enum.Font.GothamMedium,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        Parent = f
+    })
+    
+    local obj = { Type = "ProgressBar", id = id, Value = 0 }
+    
+    function obj:SetProgress(percent)
+        self.Value = math.clamp(percent, 0, 100)
+        local formatted = string.format("%d%%", self.Value)
+        valLbl.Text = formatted
+        tw(fill, { Size = UDim2.fromScale(self.Value / 100, 1) }, 0.25)
+    end
+    
+    function obj:SetValue(v)
+        self:SetProgress(v)
+    end
+    
+    function obj:SetTitle(newTitle)
+        titleLbl.Text = newTitle
+    end
+    
+    Aurora.Options[id] = obj
+    return obj
+end
+
 SaveManager:BuildFolderTree()
 Aurora.SaveManager = SaveManager
 

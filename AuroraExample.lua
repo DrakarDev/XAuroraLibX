@@ -28,7 +28,26 @@ else
     Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"))()
 end
 
--- 1. CUSTOM THEME REGISTRATION
+-- 1. KEY SYSTEM VERIFICATION (NEW FEATURE)
+-- Block script load until the user enters a valid license key
+local keyVerified = false
+Aurora.KeySystem.new({
+    Title = "Aurora Verification",
+    SubTitle = "License Verification Required",
+    Note = "Get your free license key from our Discord server. Keys update every 24 hours!",
+    Keys = {"AuroraKey2026", "DevKey"},       -- Local valid keys list
+    KeyLink = "https://discord.gg/auroralib", -- Get key copy link
+    SaveKey = true,                           -- Save verified key to cache
+    FileName = "AuroraLicense_Cache.txt",     -- Cached key file name
+    OnSuccess = function()
+        keyVerified = true
+    end
+})
+
+-- Wait for validation success
+repeat task.wait(0.2) until keyVerified
+
+-- 2. CUSTOM THEME REGISTRATION
 -- Register a custom neon amethyst theme programmatically
 Aurora:CreateTheme("CyberGlow", {
     Background   = Color3.fromRGB(15, 10, 25),
@@ -78,6 +97,28 @@ local Window = Aurora:CreateWindow({
 -- 3. HUD OVERLAYS INITIALIZATION
 local WatermarkObj = Aurora:Watermark({ Enabled = true, Title = "Aurora Premium" })
 local KeybindListObj = Aurora:KeybindList({ Enabled = true })
+
+-- Create draggable HUD monitor panel (NEW FEATURE)
+local HUDObj = Aurora:CreateHUD({ Title = "Script Status Monitor", Width = 220 })
+HUDObj:SetItem("Status", "Idle")
+HUDObj:SetItem("Activity", "None")
+HUDObj:SetItem("FPS", "60")
+HUDObj:SetItem("Ping", "0ms")
+
+-- Live update FPS/Ping inside HUD
+task.spawn(function()
+    local runService = game:GetService("RunService")
+    local stats = game:GetService("Stats")
+    while task.wait(1) do
+        local fps = math.floor(1 / runService.RenderStepped:Wait())
+        local ping = 0
+        pcall(function()
+            ping = math.floor(stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+        end)
+        HUDObj:SetItem("FPS", tostring(fps))
+        HUDObj:SetItem("Ping", tostring(ping) .. "ms")
+    end
+end)
 
 -- 4. CATEGORIES
 local CatHome = Window:AddCategory("Homepage")
@@ -153,6 +194,15 @@ local KeybindListTgl = SecWelcome:AddToggle("KeybindListTgl", {
     end
 })
 
+local HUDTgl = SecWelcome:AddToggle("HUDTgl", {
+    Title = "Enable Stats HUD Monitor",
+    Default = true,
+    Tooltip = "Toggle the draggable script metrics HUD panel.",
+    Callback = function(v)
+        HUDObj:Toggle(v)
+    end
+})
+
 SecWelcome:AddSeparator("INTERACTIVE DEMOS")
 
 local TestInput = SecWelcome:AddInput("TestInput", {
@@ -161,6 +211,28 @@ local TestInput = SecWelcome:AddInput("TestInput", {
     Tooltip = "Type anything here to dynamically update the status label above.",
     Callback = function(v)
         MyLabel:SetText("System Status: " .. v)
+    end
+})
+
+local DemoProgress = SecWelcome:AddProgressBar("DemoProgressBar", {
+    Title = "Simulated Task Progress"
+})
+DemoProgress:SetProgress(25)
+
+SecWelcome:AddButton({
+    Title = "Run Progress Simulation",
+    Icon = "solar/play-bold",
+    Callback = function()
+        task.spawn(function()
+            for i = 0, 100, 5 do
+                DemoProgress:SetProgress(i)
+                HUDObj:SetItem("Status", i == 100 and "Idle" or "Processing...")
+                HUDObj:SetItem("Activity", string.format("Task Run (%d%%)", i))
+                task.wait(0.08)
+            end
+            task.wait(1)
+            HUDObj:SetItem("Activity", "None")
+        end)
     end
 })
 

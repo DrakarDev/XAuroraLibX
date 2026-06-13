@@ -126,6 +126,21 @@ KeybindList:Refresh()                                -- Force manual refresh of 
 KeybindList:Destroy()                                -- Hide and clean up keybind HUD tracker
 ```
 
+### 4. Draggable Status HUD Panel (NEW)
+Creates a draggable custom HUD monitor overlay to display any script status or values (e.g. state, active process, etc.):
+
+```lua
+local HUD = Aurora:CreateHUD({
+    Title = "Status Monitor",
+    Width = 220,                                     -- Width in pixels
+    Position = UDim2.new(0, 20, 0, 200)              -- Initial floating position
+})
+
+HUD:SetItem("Status", "Idle")                        -- Set item key and value
+HUD:SetItem("Activity", "Harvesting")
+HUD:Toggle(true)                                     -- Show/hide HUD
+```
+
 ---
 
 ## 💬 Modal Dialog System
@@ -179,6 +194,34 @@ When `Auto-save on change` is toggled on in the UI, any modification to interact
 To ignore specific keybinds or settings from config saves (e.g. theme selectors, menu hotkeys):
 ```lua
 Aurora.SaveManager:IgnoreIndexes({ "ThemeSelector", "AimbotBind" })
+```
+
+---
+
+## 🔑 Built-in Key System
+
+AuroraLib has a built-in premium license verification system. It blocks your script execution, prompts the user to enter a key with custom styled overlays, and supports caching keys locally in the Roblox `workspace/` folder.
+
+```lua
+local keyVerified = false
+Aurora.KeySystem.new({
+    Title = "Aurora Verification",
+    SubTitle = "License Verification Required",
+    Note = "Get your free license key from our Discord server. Keys update every 24 hours!",
+    Keys = {"AuroraKey2026", "DevKey"},       -- Local valid keys list
+    KeyLink = "https://discord.gg/auroralib", -- Link to obtain key
+    SaveKey = true,                           -- Cache verified key to file
+    FileName = "AuroraLicense_Cache.txt",     -- Cache file name in workspace/
+    OnSuccess = function()
+        keyVerified = true
+    end,
+    CustomValidate = function(key)            -- Optional custom validation (e.g. remote API fetch)
+        return key == "SpecialRemoteKey"
+    end
+})
+
+-- Wait for validation success
+repeat task.wait(0.2) until keyVerified
 ```
 
 ---
@@ -390,6 +433,17 @@ Section:AddAlert({
     Content = "All user configurations are fully loaded and active.",
     Type = "Success" -- Types: "Info", "Warning", "Error", "Success"
 })
+```
+
+#### Progress Bar:
+Inserts a progress bar element to display loading/processing percentages.
+```lua
+local ProgressBar = Section:AddProgressBar("MyProgress", {
+    Title = "Farming Process"
+})
+
+ProgressBar:SetProgress(65) -- Set progress percentage (0 - 100)
+ProgressBar:SetTitle("Custom Farming Title")
 ```
 
 #### Text Separator:
