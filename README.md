@@ -454,6 +454,25 @@ Section:AddSeparator("DEVELOPER SETTINGS")
 
 ---
 
+## 👁️ Dynamic Element Visibility (SetVisible)
+
+All elements returned by the library (such as Toggles, Sliders, Dropdowns, Paragraphs, Alerts, separators, etc.) expose a `:SetVisible(state)` method. This allows you to show or hide options dynamically at runtime. When elements are hidden, the layout automatically shifts items up to fill the empty space.
+
+```lua
+local AimbotTgl = Section:AddToggle("Aimbot", { Title = "Enable Aimbot" })
+local FOVSlider = Section:AddSlider("FOV", { Title = "FOV Range", Default = 90 })
+
+-- Hide FOV slider initially
+FOVSlider:SetVisible(false)
+
+-- Dynamically toggle visibility based on main Aimbot switch
+AimbotTgl:OnChanged(function(v)
+    FOVSlider:SetVisible(v)
+end)
+```
+
+---
+
 ## 🎨 Global Options API
 
 Retrieve any UI element's active value programmatically using its `id`:

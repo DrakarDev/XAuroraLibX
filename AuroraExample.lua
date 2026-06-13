@@ -465,9 +465,24 @@ SecMining:AddToggle("TgtResources", { Title="Filter: Resources", Default=true })
 
 -- Right Column: KillAura & Aiming Options
 local SecMelee = CmbRight:AddSection("Melee Combat")
-local KillTgl = SecMemelee or SecMelee:AddToggle("KillAura", { Title="Kill Aura", Tooltip="When enabled, automatically attacks hostile animals and nearby players." })
+local KillTgl = SecMelee:AddToggle("KillAura", {
+    Title = "Kill Aura",
+    Tooltip = "When enabled, automatically attacks hostile animals and nearby players.",
+    Callback = function(v)
+        -- Can also use Callback instead of OnChanged if preferred
+    end
+})
 KillTgl:AddKeybind("KillAuraBind", { Default=Enum.KeyCode.G })
-SecMelee:AddSlider("KillRange", { Title="Kill Range (studs)", Tooltip="The maximum combat reach in studs for attacking targets.", Min=0, Max=30, Default=8, Suffix=" studs" })
+
+local KillRangeSlider = SecMelee:AddSlider("KillRange", { Title="Kill Range (studs)", Tooltip="The maximum combat reach in studs for attacking targets.", Min=0, Max=30, Default=8, Suffix=" studs" })
+
+-- Initially hide the sub-option slider
+KillRangeSlider:SetVisible(false)
+
+-- Dynamically toggle visibility based on KillAura state
+KillTgl:OnChanged(function(v)
+    KillRangeSlider:SetVisible(v)
+end)
 
 local SecProj = CmbRight:AddSection("Projectiles")
 SecProj:AddToggle("SilentAim", { Title="Silent Aim" })
