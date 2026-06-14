@@ -84,11 +84,13 @@ local function applyIcon(imgLabel, iconStr, color)
     else
         _loadPack(pack)
         task.spawn(function()
+            local wait = 0.05
             local t0 = tick()
-            while tick()-t0 < 6 do
-                task.wait(0.2)
+            while tick()-t0 < 8 do
+                task.wait(wait)
                 if _PACK_STATUS[pack] == "ready" then tryApply(); break end
                 if _PACK_STATUS[pack] == "fail"  then break end
+                wait = math.min(wait * 2, 0.8) -- exponential backoff
             end
         end)
     end
@@ -103,9 +105,19 @@ local function triggerAutosave()
     end
 end
 
+local _tweenInfoCache = {}
+local function _getTweenInfo(t, style, dir)
+    local key = tostring(t).."_"..tostring(style).."_"..tostring(dir)
+    if not _tweenInfoCache[key] then
+        _tweenInfoCache[key] = TweenInfo.new(t, style, dir)
+    end
+    return _tweenInfoCache[key]
+end
 local function tw(obj, props, t, style, dir)
     t = t or 0.2; style = style or Enum.EasingStyle.Quad; dir = dir or Enum.EasingDirection.Out
-    TweenService:Create(obj, TweenInfo.new(t, style, dir), props):Play()
+    local tween = TweenService:Create(obj, _getTweenInfo(t, style, dir), props)
+    tween:Play()
+    return tween
 end
 
 local function make(class, props)
@@ -344,11 +356,17 @@ local function createAcrylic(frame)
 end
 
 function Aurora:UpdateTheme()
-    for _, e in ipairs(self.ThemeObjs) do
-        pcall(function()
+    local dead = {}
+    for i, e in ipairs(self.ThemeObjs) do
+        local ok = pcall(function()
             if e.isCallback then
                 e.callback()
             else
+                -- Prune dead objects
+                if not e.obj or (e.obj.ClassName ~= "" and not e.obj.Parent and not pcall(function() return e.obj.ClassName end)) then
+                    table.insert(dead, i)
+                    return
+                end
                 local val = self.Theme[e.key]
                 if e.key == "BackgroundImage" then
                     if val and val ~= "" then
@@ -364,6 +382,11 @@ function Aurora:UpdateTheme()
                 end
             end
         end)
+        if not ok then table.insert(dead, i) end
+    end
+    -- Remove dead in reverse so indices stay valid
+    for i = #dead, 1, -1 do
+        table.remove(self.ThemeObjs, dead[i])
     end
 end
 
@@ -1025,6 +1048,32 @@ Aurora.Themes = {
         AlertError   = Color3.fromRGB(220, 55, 55),
         AlertSuccess = Color3.fromRGB(38, 195, 95),
         IconColor    = Color3.fromRGB(170, 160, 200),
+    },
+    Sakura = {
+        Background   = Color3.fromRGB(255, 238, 248),
+        Sidebar      = Color3.fromRGB(252, 225, 242),
+        TopBar       = Color3.fromRGB(252, 225, 242),
+        Element      = Color3.fromRGB(255, 248, 253),
+        ElementHover = Color3.fromRGB(248, 220, 240),
+        Accent       = Color3.fromRGB(230, 100, 160),
+        AccentDim    = Color3.fromRGB(245, 185, 215),
+        Text         = Color3.fromRGB(80, 30, 60),
+        SubText      = Color3.fromRGB(165, 100, 140),
+        Border       = Color3.fromRGB(235, 180, 215),
+        Scrollbar    = Color3.fromRGB(220, 160, 200),
+        ToggleOff    = Color3.fromRGB(248, 218, 238),
+        ToggleOn     = Color3.fromRGB(230, 100, 160),
+        SliderTrack  = Color3.fromRGB(248, 215, 235),
+        SliderFill   = Color3.fromRGB(230, 100, 160),
+        InputBG      = Color3.fromRGB(255, 245, 252),
+        NotifBG      = Color3.fromRGB(255, 238, 248),
+        TabActive    = Color3.fromRGB(80, 30, 60),
+        TabInactive  = Color3.fromRGB(165, 100, 140),
+        AlertInfo    = Color3.fromRGB(130, 140, 220),
+        AlertWarn    = Color3.fromRGB(200, 130, 50),
+        AlertError   = Color3.fromRGB(210, 70, 70),
+        AlertSuccess = Color3.fromRGB(60, 180, 100),
+        IconColor    = Color3.fromRGB(195, 100, 155),
     }
 }
 
@@ -1351,10 +1400,22 @@ function Aurora:Notify(cfg)
     applyIcon(cpIco, "solar/copy-linear",   thm.SubText)
 
     local pTrack = make("Frame", {
-        Size=UDim2.new(1,0,0,s(2)), Position=UDim2.new(0,0,1,-s(2)),
-        BackgroundColor3=thm.Border, BackgroundTransparency=0.8, BorderSizePixel=0, Parent=card,
+        Size=UDim2.new(1,0,0,s(3)), Position=UDim2.new(0,0,1,-s(3)),
+        BackgroundColor3=thm.Border, BackgroundTransparency=0.75, BorderSizePixel=0, Parent=card,
     })
     local pFill = make("Frame", { Size=UDim2.new(1,0,1,0), BackgroundColor3=accent, BorderSizePixel=0, Parent=pTrack })
+    -- Gradient on progress fill
+    make("UIGradient", {
+        Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200,200,200)),
+        }),
+        Transparency=NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.2),
+            NumberSequenceKeypoint.new(1, 0),
+        }),
+        Rotation=0, Parent=pFill,
+    })
     make("UICorner", { CornerRadius=sz(2), Parent=pTrack })
     make("UICorner", { CornerRadius=sz(2), Parent=pFill })
 
@@ -1546,16 +1607,21 @@ end
 -- ================================================================================
 local function registerHover(f, hoverTrigger)
     local stroke = f:FindFirstChildOfClass("UIStroke")
+    local hovered = false
     hoverTrigger.MouseEnter:Connect(function()
-        tw(f, { BackgroundColor3 = Aurora.Theme.ElementHover, BackgroundTransparency = 0.85 }, 0.15)
+        if hovered then return end
+        hovered = true
+        tw(f, { BackgroundColor3 = Aurora.Theme.ElementHover, BackgroundTransparency = 0.8 }, 0.12)
         if stroke then
-            tw(stroke, { Color = Aurora.Theme.Accent, Transparency = 0.7 }, 0.15)
+            tw(stroke, { Color = Aurora.Theme.Accent, Transparency = 0.65 }, 0.12)
         end
     end)
     hoverTrigger.MouseLeave:Connect(function()
-        tw(f, { BackgroundColor3 = Aurora.Theme.Element, BackgroundTransparency = 1 }, 0.15)
+        if not hovered then return end
+        hovered = false
+        tw(f, { BackgroundColor3 = Aurora.Theme.Element, BackgroundTransparency = 1 }, 0.18)
         if stroke then
-            tw(stroke, { Color = Color3.fromRGB(255,255,255), Transparency = 1 }, 0.15)
+            tw(stroke, { Color = Color3.fromRGB(255,255,255), Transparency = 1 }, 0.18)
         end
     end)
 end
@@ -1583,14 +1649,24 @@ local function elemFrame(parent)
 
     local sh = make("Frame", {
         Size=UDim2.new(1,0,0,s(1)), BackgroundColor3=Color3.fromRGB(255,255,255),
-        BackgroundTransparency=1, BorderSizePixel=0, Parent=f,
+        BackgroundTransparency=0.9, BorderSizePixel=0, ZIndex=2, Parent=f,
     })
     make("UICorner", { CornerRadius=sz(6), Parent=sh })
+    make("UIGradient", {
+        Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+            ColorSequenceKeypoint.new(0.6, Color3.fromRGB(200,200,220)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(100,100,120)),
+        }),
+        Transparency=NumberSequence.new(0, 0),
+        Rotation=0,
+        Parent=sh,
+    })
 
     if Aurora.FadeIn then
         f.GroupTransparency = 1
         task.defer(function()
-            tw(f, { GroupTransparency = 0 }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            tw(f, { GroupTransparency = 0 }, 0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         end)
     end
 
@@ -2018,29 +2094,60 @@ function Section:AddToggle(id, cfg)
         Parent=rightControls,
     })
 
-    local checkbox = make("TextButton", {
-        Size=ss(16,16), BackgroundColor3=def and thm.ToggleOn or Color3.fromRGB(0,0,0),
-        BackgroundTransparency=def and 0 or 1,
-        Text="", AutoButtonColor=false, LayoutOrder=10, ZIndex=6, Parent=rightControls,
+    -- Modern pill-style toggle switch
+    local pillW, pillH = s(34), s(18)
+    local knobSize = s(14)
+    local pill = make("TextButton", {
+        Size=UDim2.fromOffset(pillW, pillH),
+        BackgroundColor3=def and thm.ToggleOn or thm.ToggleOff,
+        Text="", AutoButtonColor=false,
+        LayoutOrder=10, ZIndex=6, Parent=rightControls,
     })
-    make("UICorner", { CornerRadius=sz(3), Parent=checkbox })
-    local checkStroke = make("UIStroke", { Color=def and thm.ToggleOn or thm.Border, Thickness=1.5, Parent=checkbox })
-    local checkIco = make("ImageLabel", {
-        Size=ss(10,10), AnchorPoint=Vector2.new(0.5,0.5), Position=UDim2.fromScale(0.5,0.5),
-        BackgroundTransparency=1, Visible=def, Parent=checkbox
+    make("UICorner", { CornerRadius=UDim.new(1,0), Parent=pill })
+    local pillStroke = make("UIStroke", {
+        Color=def and thm.ToggleOn or thm.Border,
+        Thickness=1, Parent=pill
     })
-    applyIcon(checkIco, "solar/check-linear", Color3.fromRGB(255,255,255))
+    -- Inner highlight (top gloss)
+    local pillGloss = make("Frame", {
+        Size=UDim2.new(1,-s(2),0,s(8)),
+        Position=UDim2.new(0,s(1),0,s(1)),
+        BackgroundColor3=Color3.fromRGB(255,255,255),
+        BackgroundTransparency=0.88, BorderSizePixel=0, ZIndex=7,
+        Parent=pill,
+    })
+    make("UICorner", { CornerRadius=UDim.new(1,0), Parent=pillGloss })
+    -- Knob
+    local knob = make("Frame", {
+        Size=UDim2.fromOffset(knobSize, knobSize),
+        AnchorPoint=Vector2.new(0,0.5),
+        Position=def and UDim2.new(1,-(knobSize+s(2)),0.5,0) or UDim2.new(0,s(2),0.5,0),
+        BackgroundColor3=Color3.fromRGB(255,255,255),
+        BorderSizePixel=0, ZIndex=8,
+        Parent=pill,
+    })
+    make("UICorner", { CornerRadius=UDim.new(1,0), Parent=knob })
+    make("UIStroke", { Color=Color3.fromRGB(0,0,0), Transparency=0.88, Thickness=1, Parent=knob })
+    -- Knob shadow (subtle)
+    local knobShadow = make("ImageLabel", {
+        Size=UDim2.fromOffset(knobSize+s(4), knobSize+s(4)),
+        AnchorPoint=Vector2.new(0.5,0.5),
+        Position=UDim2.fromScale(0.5,0.5),
+        BackgroundTransparency=1,
+        Image="rbxassetid://6014261993",
+        ImageColor3=Color3.fromRGB(0,0,0),
+        ImageTransparency=0.85,
+        ZIndex=7, Parent=knob,
+    })
 
     local function set(v, silent)
         obj.Value=v
-        tw(checkbox, {
-            BackgroundColor3=v and Aurora.Theme.ToggleOn or Color3.fromRGB(0,0,0),
-            BackgroundTransparency=v and 0 or 1
-        }, 0.1)
-        tw(checkStroke, {
-            Color=v and Aurora.Theme.ToggleOn or Aurora.Theme.Border
-        }, 0.1)
-        checkIco.Visible = v
+        local currentThm = Aurora.Theme
+        tw(pill, { BackgroundColor3=v and currentThm.ToggleOn or currentThm.ToggleOff }, 0.18, Enum.EasingStyle.Quad)
+        tw(pillStroke, { Color=v and currentThm.ToggleOn or currentThm.Border }, 0.18)
+        tw(knob, {
+            Position=v and UDim2.new(1,-(knobSize+s(2)),0.5,0) or UDim2.new(0,s(2),0.5,0)
+        }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         if not silent then pcall(cb, v) end
         triggerAutosave()
         if Aurora.RefreshKeybindList then task.defer(Aurora.RefreshKeybindList) end
@@ -2049,7 +2156,18 @@ function Section:AddToggle(id, cfg)
         end
     end
 
-    checkbox.MouseButton1Click:Connect(function() set(not obj.Value) end)
+    pill.MouseButton1Click:Connect(function() set(not obj.Value) end)
+    -- Press animation
+    pill.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            tw(knob, { Size=UDim2.fromOffset(knobSize+s(3), knobSize-s(2)) }, 0.08)
+        end
+    end)
+    pill.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            tw(knob, { Size=UDim2.fromOffset(knobSize, knobSize) }, 0.12, Enum.EasingStyle.Back)
+        end
+    end)
 
     local btn = make("TextButton", {
         Size=UDim2.new(1,-s(170),1,0), BackgroundTransparency=1, Text="", ZIndex=1, Parent=topF,
@@ -2288,31 +2406,66 @@ function Section:AddSlider(id, cfg)
         TextXAlignment=Enum.TextXAlignment.Right,ClearTextOnFocus=false,Parent=topF,
     })
 
-    local tr=make("Frame",{Size=UDim2.new(1,0,0,s(4)),LayoutOrder=2,BackgroundColor3=thm.SliderTrack,Parent=f})
+    local tr=make("Frame",{Size=UDim2.new(1,0,0,s(5)),LayoutOrder=2,BackgroundColor3=thm.SliderTrack,Parent=f})
     make("UICorner",{CornerRadius=UDim.new(1,0),Parent=tr})
     local fill=make("Frame",{Size=UDim2.new(0,0,1,0),BackgroundColor3=thm.SliderFill,Parent=tr})
     make("UICorner",{CornerRadius=UDim.new(1,0),Parent=fill})
+    -- Gradient on fill for a glowing look
+    make("UIGradient",{
+        Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200,200,200)),
+        }),
+        Transparency=NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.35),
+            NumberSequenceKeypoint.new(1, 0),
+        }),
+        Rotation=0, Parent=fill,
+    })
     reg(fill,"BackgroundColor3","SliderFill")
+    -- Knob/thumb
+    local knobSz = s(12)
+    local sliderKnob = make("Frame",{
+        Size=UDim2.fromOffset(knobSz,knobSz),
+        AnchorPoint=Vector2.new(0.5,0.5), Position=UDim2.new(0,0,0.5,0),
+        BackgroundColor3=Color3.fromRGB(255,255,255),
+        BorderSizePixel=0, ZIndex=5, Parent=tr,
+    })
+    make("UICorner",{CornerRadius=UDim.new(1,0),Parent=sliderKnob})
+    make("UIStroke",{Color=thm.SliderFill,Thickness=2,Parent=sliderKnob})
+    local knobScale = make("UIScale",{Scale=1,Parent=sliderKnob})
 
     local function update(x)
         local r=math.clamp((x-tr.AbsolutePosition.X)/tr.AbsoluteSize.X,0,1)
         local raw=min+(max-min)*r
         local val=dec==0 and math.floor(raw+.5) or math.floor(raw*(10^dec)+.5)/(10^dec)
         obj.Value=val; fill.Size=UDim2.new(r,0,1,0)
+        sliderKnob.Position=UDim2.new(r,0,0.5,0)
         valBox.Text=tostring(val)..(cfg.Suffix or "")
         if cfg.Callback then pcall(cfg.Callback,val) end
         triggerAutosave()
     end
 
     local drag=false
-    tr.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=true; update(i.Position.X) end end)
+    tr.InputBegan:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then
+            drag=true; update(i.Position.X)
+            tw(knobScale,{Scale=1.3},0.1,Enum.EasingStyle.Back)
+        end
+    end)
     UserInputService.InputChanged:Connect(function(i) if drag and i.UserInputType==Enum.UserInputType.MouseMovement then update(i.Position.X) end end)
-    UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end end)
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then
+            drag=false
+            tw(knobScale,{Scale=1},0.12,Enum.EasingStyle.Back)
+        end
+    end)
 
     function obj:SetValue(v)
         v=math.clamp(v,min,max); obj.Value=v
         local r=(v-min)/(max-min)
         fill.Size=UDim2.new(r,0,1,0)
+        sliderKnob.Position=UDim2.new(r,0,0.5,0)
         valBox.Text=tostring(v)..(cfg.Suffix or "")
         if cfg.Callback then pcall(cfg.Callback,v) end
         triggerAutosave()
@@ -2513,8 +2666,22 @@ function Section:AddButton(cfg)
 
     local btn=make("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",Parent=topF})
     btn.MouseButton1Click:Connect(function()
-        tw(f,{BackgroundColor3=Aurora.Theme.Accent,BackgroundTransparency=0.65},0.08)
-        task.delay(0.12,function() tw(f,{BackgroundColor3=Aurora.Theme.Element,BackgroundTransparency=1},0.18) end)
+        -- Ripple effect
+        pcall(function()
+            local ripple = make("Frame",{
+                Size=UDim2.fromOffset(0,0),
+                AnchorPoint=Vector2.new(0.5,0.5),
+                Position=UDim2.fromScale(0.5,0.5),
+                BackgroundColor3=Aurora.Theme.Accent,
+                BackgroundTransparency=0.55,
+                BorderSizePixel=0, ZIndex=10, Parent=f,
+            })
+            make("UICorner",{CornerRadius=UDim.new(1,0),Parent=ripple})
+            tw(ripple,{Size=UDim2.fromOffset(s(200),s(200)),BackgroundTransparency=1},0.4,Enum.EasingStyle.Quad)
+            task.delay(0.42,function() pcall(function() ripple:Destroy() end) end)
+        end)
+        tw(f,{BackgroundColor3=Aurora.Theme.Accent,BackgroundTransparency=0.6},0.06)
+        task.delay(0.1,function() tw(f,{BackgroundColor3=Aurora.Theme.Element,BackgroundTransparency=1},0.2) end)
         if cfg.Callback then pcall(cfg.Callback) end
     end)
     registerHover(f, btn)
@@ -3073,23 +3240,48 @@ function Column:AddSection(title, cfg)
     make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(7),Parent=f})
 
     local headerFrame=make(Aurora.FadeIn and "CanvasGroup" or "Frame",{Size=UDim2.new(1,0,0,s(22)),BackgroundTransparency=1,Parent=f})
+    -- Accent dot
+    local accentDot = make("Frame",{
+        Size=UDim2.fromOffset(s(3),s(3)),
+        AnchorPoint=Vector2.new(0,0.5), Position=UDim2.new(0,0,0.5,-s(3)),
+        BackgroundColor3=Aurora.Theme.Accent,
+        BorderSizePixel=0, Parent=headerFrame,
+    })
+    make("UICorner",{CornerRadius=UDim.new(1,0),Parent=accentDot})
+    reg(accentDot,"BackgroundColor3","Accent")
+
     local titleLbl = make("TextLabel",{
-        Size=UDim2.new(1,0,1,-s(4)),
+        Size=UDim2.new(1,-s(8),1,-s(4)),
+        Position=UDim2.new(0,s(8),0,0),
         BackgroundTransparency=1,
-        Text="— "..title.." —",
+        Text=title,
         TextColor3=Aurora.Theme.Accent,
-        TextSize=fs(11),Font=Enum.Font.GothamBold,
+        TextSize=fs(10),Font=Enum.Font.GothamBold,
         TextXAlignment=Enum.TextXAlignment.Left,
+        TextTransparency=0.05,
         Parent=headerFrame,
     })
     reg(titleLbl, "TextColor3", "Accent")
 
     local line=make("Frame",{
         Size=UDim2.new(1,0,0,s(1)),
-        Position=UDim2.new(0,0,1,-s(2)),
+        Position=UDim2.new(0,0,1,-s(1)),
         BackgroundColor3=Aurora.Theme.Accent,
         BorderSizePixel=0,
         Parent=headerFrame,
+    })
+    -- Gradient fade on the underline
+    make("UIGradient",{
+        Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255)),
+        }),
+        Transparency=NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0),
+            NumberSequenceKeypoint.new(0.45, 0.1),
+            NumberSequenceKeypoint.new(1, 1),
+        }),
+        Rotation=0, Parent=line,
     })
     reg(line, "BackgroundColor3", "Accent")
 

@@ -1,7 +1,7 @@
-# AuroraLib v4.0
+# AuroraLib v4.1
 **Premium, Scalable, and Icon-Ready Custom Roblox UI Library**
 
-![Version](https://img.shields.io/badge/Version-4.0-red?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-4.1-red?style=for-the-badge)
 ![Lua](https://img.shields.io/badge/Language-Lua-blue?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Roblox-orange?style=for-the-badge)
 
@@ -9,18 +9,25 @@ AuroraLib is a premium UI library for Roblox executors. It features a glass-effe
 
 ---
 
-## 🚀 Key Features in v4.0
+## 🚀 What's New in v4.1
 
-- ↔️ **8-Directional Edge Resizing**: Grab any edge (`Top`, `Bottom`, `Left`, `Right`) or corner of the window frame to dynamically resize the interface. Features hover border highlights in the accent color.
-- 🎨 **RGB Chroma Mode & 24+ Premium Themes**: Select from premium style presets (including `Dark`, `Ocean`, `Amethyst`, `Neon`, `BloodRed`, `Midnight`, `NeonCyber`, `ArcticFrost`, `CottonCandy`, `Orange`, `Cyanic`, `AmberGlow`, `DeepViolet`, `Charcoal`, `PearlWhite`, `Galaxy`, `AMOLED`, `AshGray`, `NeonPurple`, `RoyalBlue`, `DeepOcean`, `MidnightBlue`, `CosmicViolet`) or cycle smoothly with `RGB` Chroma mode. Custom themes fully support background images (`BackgroundImage` and `BackgroundImageTransparency`).
-- 📹 **Premium Video Player**: Insert custom interactive video frames (`Section:AddVideo`) with play/pause buttons, loop configuration, volume control, and customizable player heights.
-- 💾 **Native SaveManager**: Built-in config manager to save, load, delete, and autoload user options automatically using JSON workspace files.
-- 📑 **Scrollable Sub-Tabs**: Multi-layer horizontal navigation bar that scrolls horizontally when sub-tabs exceed the panel width, complete with sliding underline indicators.
-- 🎨 **2D Colorpicker (SV Canvas)**: Professional color editor with a 2D Saturation/Value canvas, Y-axis Hue bar, Alpha slider, Hex/RGB inputs, and old/new swatches.
-- 🗂 **Sidebar Categories (Collapsible)**: Organize tabs under collapsible sidebar headers with rotating chevron indicators.
-- 🎛 **Inline Component Add-ons**: Attach inline keybinds and colorpickers directly to Toggles, stacking neatly next to the toggle pill.
-- 🔔 **Stacking Notifications**: Glassmorphic notifications supporting custom play sound beeps and a max limit of 5 stacked notification cards (auto-dismissing the oldest).
-- 💻 **Window Controls + Global Bind**: Minimize, maximize, close with confirmation prompt, and toggle window visibility using `RightControl` keybind.
+- 🔘 **Pill-Style Toggle Switch**: All toggles now use a modern iOS-style pill switch (34×18px) with a sliding knob, spring animation, and gloss highlight. Tap or click anywhere on the toggle row to flip it.
+- 🎚️ **Slider Knob Thumb**: Sliders now display a 12×12 circular knob at the fill endpoint that scales up on drag for tactile feedback, plus a gradient fill for visual depth.
+- 💥 **Button Ripple Effect**: Clicking any button spawns a circular ripple from center that expands and fades — pure material-design feel.
+- ✨ **Gradient Section Headers**: Section titles now feature a small accent dot + fading gradient underline instead of a flat line, much more premium.
+- 🌸 **New Theme: Sakura**: Cherry-blossom pink light theme — soft pinks, warm whites, rosy accents. Use `Aurora:SetTheme("Sakura")`.
+- ⚡ **Performance: TweenInfo Cache**: `tw()` now caches `TweenInfo` objects to avoid creating GC garbage on every animation call.
+- ⚡ **Performance: Icon Exponential Backoff**: `applyIcon` uses exponential backoff (50ms→800ms) instead of fixed 200ms polling — icons appear faster on load.
+- ⚡ **Performance: Hover Debounce**: `registerHover` guards against MouseEnter/Leave spam to prevent tween queuing.
+- ⚡ **Performance: ThemeObjs Pruning**: `UpdateTheme()` now removes destroyed objects from the observer list automatically.
+- 🌈 **Gradient Notification Progress Bar**: The countdown bar under notifications now has a vibrant-to-muted gradient fill.
+- 🌟 **Element Shimmer Highlight**: Element frames have a visible top-edge highlight with a gradient that creates a glass-like inner gloss.
+
+---
+
+## 🎨 Themes (25+ available)
+
+`Dark`, `Light`, `Ocean`, `Amethyst`, `Neon`, `BloodRed`, `Midnight`, `NeonCyber`, `ArcticFrost`, `CottonCandy`, `Orange`, `Cyanic`, `AmberGlow`, `DeepViolet`, `Charcoal`, `PearlWhite`, `Galaxy`, `AMOLED`, `AshGray`, `NeonPurple`, `RoyalBlue`, `DeepOcean`, `MidnightBlue`, `CosmicViolet`, **`Sakura`** 🌸, `RGB` (chroma)
 
 ---
 
