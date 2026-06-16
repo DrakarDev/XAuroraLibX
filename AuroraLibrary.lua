@@ -5633,6 +5633,14 @@ function Section:AddViewport(id, cfg)
     local spinning      = autoSpin
     local spinDeg       = spinSpeed ~= 0 and spinSpeed or 30
     local _allConns     = {}
+    local charConn      = nil
+
+    local function disconnectCharConn()
+        if charConn then
+            pcall(function() charConn:Disconnect() end)
+            charConn = nil
+        end
+    end
 
     local worldModel = Instance.new("WorldModel")
     worldModel.Parent = vp
@@ -5661,6 +5669,7 @@ function Section:AddViewport(id, cfg)
 
     -- Clear model with fade
     local function clearModel()
+        disconnectCharConn()
         if currentModel then
             -- Fade out all parts
             for _, desc in ipairs(currentModel:GetDescendants()) do
@@ -5693,11 +5702,37 @@ function Section:AddViewport(id, cfg)
         end
         modelRoot = nil
         modelOrigin = Vector3.zero
-        if not model then phFrame.Visible = true; updateFooter(""); updateCamera(); return end
+        if not model or typeof(model) ~= "Instance" then
+            phFrame.Visible = true
+            updateFooter("")
+            updateCamera()
+            return
+        end
 
         local clone
-        local ok = pcall(function() clone = model:Clone() end)
-        if not ok or not clone then return end
+        local ok = pcall(function()
+            local archivables = {}
+            for _, desc in ipairs(model:GetDescendants()) do
+                pcall(function()
+                    archivables[desc] = desc.Archivable
+                    desc.Archivable = true
+                end)
+            end
+            local oldArch = model.Archivable
+            model.Archivable = true
+            
+            clone = model:Clone()
+            
+            pcall(function() model.Archivable = oldArch end)
+            for desc, val in pairs(archivables) do
+                pcall(function() desc.Archivable = val end)
+            end
+        end)
+        
+        if not ok or not clone then
+            warn("[AuroraLib Viewport] Failed to clone model: " .. tostring(model))
+            return
+        end
 
         clone.Parent = worldModel
 
@@ -5920,10 +5955,12 @@ function Section:AddViewport(id, cfg)
     local obj = { Type = "Viewport", id = id }
 
     function obj:SetModel(model)
+        disconnectCharConn()
         loadModelIntoViewport(model)
     end
 
     function obj:SetWorkspaceModel(nameOrInstance)
+        disconnectCharConn()
         if typeof(nameOrInstance) == "Instance" then
             loadModelIntoViewport(nameOrInstance)
         else
@@ -5937,6 +5974,7 @@ function Section:AddViewport(id, cfg)
     end
 
     function obj:SetPlayer(playerOrName)
+        disconnectCharConn()
         local PlayersService = game:GetService("Players")
         local target
         if playerOrName == nil or playerOrName == "local" then
@@ -5946,10 +5984,16 @@ function Section:AddViewport(id, cfg)
         elseif type(playerOrName) == "string" then
             target = PlayersService:FindFirstChild(playerOrName)
         end
-        if target and target.Character then
-            loadModelIntoViewport(target.Character)
+        if target then
+            charConn = target.CharacterAdded:Connect(function(char)
+                loadModelIntoViewport(char)
+            end)
+            table.insert(_allConns, charConn)
+            if target.Character then
+                loadModelIntoViewport(target.Character)
+            end
         else
-            warn("[AuroraLib Viewport] Character not found for:", tostring(playerOrName))
+            warn("[AuroraLib Viewport] Player not found for:", tostring(playerOrName))
         end
     end
 
