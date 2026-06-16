@@ -337,6 +337,88 @@ Code:SetCode("print('Goodbye')")
 
 ---
 
+## 🎮 3D Viewport Element
+
+`Section:AddViewport` — A premium embedded 3D viewer inside any section. Supports loading player characters, workspace models, or any custom Model/BasePart. Comes with an interactive orbital camera (drag to rotate, scroll to zoom), auto-spin, and a built-in toolbar.
+
+### Configuration Options
+```lua
+local VP = Section:AddViewport("MyViewer", {
+    Title          = "Character Preview", -- Header label above the viewer
+    Height         = 220,                 -- Height of the viewer in pixels
+    CameraDistance = 7,                   -- Initial camera distance from model
+    CameraAngleY   = 20,                  -- Initial vertical camera elevation (degrees)
+    AutoSpin       = true,                -- Start spinning the model on load
+    SpinSpeed      = 25,                  -- Auto-spin speed in degrees per second
+})
+```
+
+### Loading Models
+```lua
+-- 1. Show a player's character (by Player object, name string, or "local")
+VP:SetPlayer("local")                      -- Your own character
+VP:SetPlayer("PlayerName")                 -- Any player in the server by name
+VP:SetPlayer(game.Players.LocalPlayer)     -- By Player object
+
+-- 2. Load any model from the Workspace by name (searches recursively)
+VP:SetWorkspaceModel("Tree")
+VP:SetWorkspaceModel("BossNPC")
+
+-- 3. Load any Model or BasePart instance directly
+local part = Instance.new("Part")
+part.Size = Vector3.new(5, 5, 5)
+VP:SetModel(part)
+```
+
+### Runtime Control
+```lua
+VP:Spin(45)          -- Start spinning at 45 degrees/sec (0 = stop)
+VP:SetCamera(10, 30) -- Change camera distance and elevation angle at runtime
+VP:SetTitle("New Title")
+VP:Clear()           -- Remove the current model and show placeholder
+VP:SetVisible(false) -- Hide/show the entire element
+```
+
+### Full Example — Character Viewer with Controls
+```lua
+local SecViewer = LeftCol:AddSection("Player Inspector")
+
+local PlayerViewport = SecViewer:AddViewport("PlayerVP", {
+    Title = "Live Character", Height = 220, AutoSpin = true, SpinSpeed = 22
+})
+PlayerViewport:SetPlayer("local")
+
+SecViewer:AddDropdown("InspectTarget", {
+    Title = "Select Player",
+    Values = { "[Local]", "PlayerA", "PlayerB" },
+    Default = "[Local]",
+    Callback = function(name)
+        if name == "[Local]" then
+            PlayerViewport:SetPlayer("local")
+        else
+            PlayerViewport:SetPlayer(name)
+        end
+    end
+})
+
+SecViewer:AddSlider("VPDistance", {
+    Title = "Zoom", Min = 3, Max = 20, Default = 7,
+    Callback = function(v) PlayerViewport:SetCamera(v, nil) end
+})
+
+SecViewer:AddToggle("VPSpin", {
+    Title = "Auto-Spin", Default = true,
+    Callback = function(v) PlayerViewport:Spin(v and 22 or 0) end
+})
+```
+
+> **Toolbar Buttons** built into every viewport:
+> - 🔄 **Reset Camera** — Restores default distance and angle
+> - ↺ **Toggle Spin** — Starts/stops auto-rotation
+> - ✕ **Clear** — Removes the loaded model
+
+---
+
 ## 🌐 Global Options API
 
 Retrieve any UI element's active value dynamically from anywhere in your script using its registered ID:
@@ -352,7 +434,7 @@ local customTagText   = Aurora.Options.CustomTag.Value
 
 ## 🛠️ Complete Integration Example
 
-To view a fully constructed script showing how all of these components work together, please refer to the `AuroraExample.lua` file included in the library directory. It features a complete mock setup for a Booga Booga style script.
+To view a fully constructed script showing how all of these components work together, please refer to the `AuroraExample.lua` file included in the library directory. It features a complete mock setup for a Booga Booga style script, plus the full **3D Viewers** tab demonstrating all `AddViewport` features.
 
 ---
 

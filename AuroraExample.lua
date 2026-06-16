@@ -1,6 +1,6 @@
 --[[
 ================================================================================
-    AuroraLib v4.5 — Complete Booga Booga Example
+    AuroraLib v4.5 - Complete Booga Booga Example
     Ready to execute in any Roblox executor!
     
     Demonstrates:
@@ -119,9 +119,10 @@ task.spawn(function()
 end)
 
 -- 4. CATEGORIES
-local CatHome = Window:AddCategory("Homepage")
-local CatGame = Window:AddCategory("Booga Booga")
-local CatUI   = Window:AddCategory("UI Settings")
+local CatHome     = Window:AddCategory("Homepage")
+local CatGame     = Window:AddCategory("Booga Booga")
+local CatViewers  = Window:AddCategory("3D Viewers")
+local CatUI       = Window:AddCategory("UI Settings")
 
 -- 5. TABS
 local HomeTab       = CatHome:AddTab({ Title="Welcome",    Icon="solar/home-bold" })
@@ -129,6 +130,9 @@ local InfoTab       = CatHome:AddTab({ Title="Info & News", Icon="solar/document
 
 local BoogaTab      = CatGame:AddTab({ Title="Main Features", Icon="solar/danger-bold" })
 local VisualsTab    = CatGame:AddTab({ Title="Visuals & ESP", Icon="solar/eye-bold" })
+
+local ViewerTab     = CatViewers:AddTab({ Title="Character Viewer", Icon="solar/user-bold" })
+local WorldTab      = CatViewers:AddTab({ Title="World Inspector",  Icon="solar/global-bold" })
 
 local UiSettingsTab = CatUI:AddTab({ Title="Interface Settings", Icon="solar/settings-bold" })
 local TestTab       = CatUI:AddTab({ Title="Testing & Debug", Icon="solar/bug-bold" })
@@ -447,9 +451,9 @@ local SubFarm     = BoogaTab:AddSubTab("Auto Farm")
 local SubLife     = BoogaTab:AddSubTab("Auto Life")
 local SubMovement = BoogaTab:AddSubTab("Movement")
 
--- ─────────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------
 --  COMBAT SUB-TAB (Two Columns)
--- ─────────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------
 local CmbLeft, CmbRight = SubCombat:AddColumns()
 
 -- Left Column: Mining & Range Options
@@ -488,9 +492,9 @@ SecProj:AddToggle("SilentAim", { Title="Silent Aim" })
 SecProj:AddToggle("AutoHit", { Title="Auto Hit Projectiles", Default=false })
 SecProj:AddSlider("FOVRadius", { Title="Aim FOV", Min=10, Max=500, Default=150, Suffix=" px" })
 
--- ─────────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------
 --  AUTOMATION SUB-TAB (Two Columns)
--- ─────────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------
 local AutLeft, AutRight = SubAuto:AddColumns()
 
 local SecHeal = AutLeft:AddSection("Auto Heal")
@@ -602,6 +606,244 @@ SecAlerts:AddAlert({ Title = "Information Alert", Content = "This is a standard 
 SecAlerts:AddAlert({ Title = "Success Alert", Content = "This is a success alert.", Type = "Success" })
 SecAlerts:AddAlert({ Title = "Warning Alert", Content = "This is a warning alert.", Type = "Warning" })
 SecAlerts:AddAlert({ Title = "Error Alert", Content = "This is an error alert.", Type = "Error" })
+
+-- ================================================================================
+--  CHARACTER VIEWER TAB
+--  Demonstrates Section:AddViewport - the premium 3D model viewer element.
+-- ================================================================================
+local ViewLeft, ViewRight = ViewerTab:AddColumns()
+
+-- -- Left Column: Character Viewport ------------------------------------------
+local SecCharView = ViewLeft:AddSection("Local Player")
+SecCharView:AddParagraph({
+    Title = "3D Character Viewer",
+    Content = "Live 3D preview of any player's character. Drag to orbit, scroll to zoom. Toolbar buttons reset camera, toggle auto-spin, or clear the model."
+})
+SecCharView:AddSpace(4)
+
+-- Create the viewport element
+local CharViewport = SecCharView:AddViewport("CharViewportMain", {
+    Title          = "Character Preview",
+    Height         = 220,
+    CameraDistance = 7,
+    CameraAngleY   = 20,
+    AutoSpin       = true,
+    SpinSpeed      = 22,   -- degrees per second
+})
+
+-- Load local player's character on creation
+CharViewport:SetPlayer("local")
+
+SecCharView:AddSpace(6)
+
+-- Player selector dropdown - pick any player in the server
+local function getPlayerNames()
+    local names = {"[LocalPlayer]"}
+    for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+        table.insert(names, p.Name)
+    end
+    return names
+end
+
+local PlayerDrop = SecCharView:AddDropdown("ViewerPlayerSelect", {
+    Title  = "View Player Character",
+    Values = getPlayerNames(),
+    Default = "[LocalPlayer]",
+    Tooltip = "Select a player from the server to display their character in the 3D viewer.",
+    Callback = function(name)
+        if name == "[LocalPlayer]" then
+            CharViewport:SetPlayer("local")
+        else
+            CharViewport:SetPlayer(name)
+        end
+    end
+})
+
+SecCharView:AddButton({
+    Title = "Refresh Player List",
+    Icon  = "solar/refresh-bold",
+    Callback = function()
+        PlayerDrop:Refresh(getPlayerNames())
+        Aurora:Notify({ Title = "Refreshed", Content = "Player list updated.", Type = "Info", Duration = 2 })
+    end
+})
+
+SecCharView:AddSeparator("CAMERA CONTROLS")
+
+SecCharView:AddSlider("ViewerCamDist", {
+    Title   = "Camera Distance",
+    Tooltip = "Controls how far the camera is from the model.",
+    Min = 3, Max = 25, Default = 7, Decimals = 1,
+    Callback = function(v)
+        CharViewport:SetCamera(v, nil)
+    end
+})
+
+SecCharView:AddSlider("ViewerCamAngle", {
+    Title   = "Camera Elevation",
+    Tooltip = "Vertical angle of the camera in degrees.",
+    Min = -75, Max = 75, Default = 20, Decimals = 0,
+    Callback = function(v)
+        CharViewport:SetCamera(nil, v)
+    end
+})
+
+SecCharView:AddToggle("ViewerAutoSpin", {
+    Title   = "Auto-Spin",
+    Default = true,
+    Tooltip = "Automatically rotates the model for a showcase effect.",
+    Callback = function(v)
+        CharViewport:Spin(v and 22 or 0)
+    end
+})
+
+SecCharView:AddSlider("ViewerSpinSpeed", {
+    Title   = "Spin Speed",
+    Tooltip = "How fast the model spins in degrees per second.",
+    Min = 5, Max = 120, Default = 22, Decimals = 0,
+    Callback = function(v)
+        if Aurora.Options.ViewerAutoSpin.Value then
+            CharViewport:Spin(v)
+        end
+    end
+})
+
+-- -- Right Column: Workspace Model Inspector -----------------------------------
+local SecWorldView = ViewRight:AddSection("Workspace Inspector")
+SecWorldView:AddParagraph({
+    Title = "Workspace Model Viewer",
+    Content = "Load any Model from the workspace by name to inspect it up close. Great for debugging map objects, tools, or NPCs."
+})
+SecWorldView:AddSpace(4)
+
+local WorldViewport = SecWorldView:AddViewport("WorldViewportMain", {
+    Title          = "Workspace Model",
+    Height         = 220,
+    CameraDistance = 10,
+    CameraAngleY   = 30,
+    AutoSpin       = false,
+})
+
+SecWorldView:AddInput("WorkspaceModelName", {
+    Title       = "Model Name",
+    Placeholder = "e.g. Tree, Island, NPC...",
+    Tooltip     = "Type the name of any model in the workspace and press Enter or click Load.",
+    Callback    = function() end  -- handled by Load button
+})
+
+SecWorldView:AddButton({
+    Title = "Load from Workspace",
+    Icon  = "solar/upload-bold",
+    Callback = function()
+        local name = Aurora.Options.WorkspaceModelName.Value
+        if not name or name == "" then
+            Aurora:Notify({ Title = "No Name", Content = "Please type a model name first.", Type = "Warning", Duration = 3 })
+            return
+        end
+        WorldViewport:SetWorkspaceModel(name)
+        Aurora:Notify({ Title = "Loaded", Content = "Showing: " .. name, Type = "Success", Duration = 3 })
+    end
+})
+
+SecWorldView:AddSeparator("QUICK LOAD")
+
+SecWorldView:AddButton({
+    Title = "Load Local Character",
+    Description = "Loads your own character into the workspace viewer.",
+    Icon  = "solar/user-bold",
+    Callback = function()
+        WorldViewport:SetPlayer("local")
+    end
+})
+
+SecWorldView:AddButton({
+    Title = "Load Custom Part Demo",
+    Description = "Creates a neon sphere and loads it as a model.",
+    Icon  = "solar/planet-bold",
+    Callback = function()
+        local part = Instance.new("Part")
+        part.Name   = "AuroraDemoPart"
+        part.Shape  = Enum.PartType.Ball
+        part.Size   = Vector3.new(5, 5, 5)
+        part.BrickColor = BrickColor.new("Bright blue")
+        part.Material   = Enum.Material.Neon
+        WorldViewport:SetModel(part)
+        part:Destroy() -- clean up original; viewport cloned it already
+        Aurora:Notify({ Title = "Demo Part", Content = "Loaded a neon sphere into the viewer!", Type = "Info", Duration = 3 })
+    end
+})
+
+SecWorldView:AddButton({
+    Title = "Clear Viewer",
+    Icon  = "solar/close-circle-bold",
+    Callback = function()
+        WorldViewport:Clear()
+    end
+})
+
+-- -- World Tab: Multiple viewports side-by-side demo --------------------------
+local WLeft, WRight = WorldTab:AddColumns()
+
+local SecEspView = WLeft:AddSection("ESP Preview")
+SecEspView:AddParagraph({
+    Title = "Player ESP Viewer",
+    Content = "This viewport auto-cycles through all players in the server, updating every 5 seconds as a showcase."
+})
+
+local EspViewport = SecEspView:AddViewport("EspViewportCycle", {
+    Title  = "Cycling Player Preview",
+    Height = 180,
+    CameraDistance = 8,
+    AutoSpin = true, SpinSpeed = 15,
+})
+
+local cycleActive = false
+local cycleThread
+
+SecEspView:AddToggle("EspCycleToggle", {
+    Title   = "Enable Auto-Cycle",
+    Default = false,
+    Tooltip = "Cycles through all players in the server every few seconds.",
+    Callback = function(v)
+        cycleActive = v
+        if v then
+            cycleThread = task.spawn(function()
+                while cycleActive do
+                    local players = game:GetService("Players"):GetPlayers()
+                    for _, p in ipairs(players) do
+                        if not cycleActive then break end
+                        EspViewport:SetPlayer(p)
+                        EspViewport:SetTitle("Viewing: " .. p.Name)
+                        task.wait(5)
+                    end
+                end
+            end)
+        else
+            if cycleThread then
+                pcall(task.cancel, cycleThread)
+                cycleThread = nil
+            end
+            EspViewport:SetTitle("Cycling Player Preview")
+            EspViewport:Clear()
+        end
+    end
+})
+
+local SecWInfo = WRight:AddSection("About Viewport")
+SecWInfo:AddParagraph({
+    Title = "Section:AddViewport - API",
+    Content = "A new premium element for AuroraLib v4.5. Embeds a live 3D ViewportFrame with orbital drag, scroll-to-zoom, toolbar controls, and a full runtime API."
+})
+SecWInfo:AddCode("ViewportUsageCode", {
+    Title = "Basic Usage",
+    Code  = [[local VP = Section:AddViewport("MyVP", { Height = 200, AutoSpin = true, SpinSpeed = 30 })
+VP:SetPlayer("local")      -- Show local character
+VP:SetWorkspaceModel("Tree") -- Load by name from Workspace
+VP:SetModel(somePart)        -- Load any Model/BasePart directly
+VP:Spin(45)                  -- Spin at 45 deg/sec
+VP:SetCamera(10, 30)         -- Set distance and elevation angle
+VP:Clear()                   -- Remove current model]]
+})
 
 -- ================================================================================
 --  INITIALIZATION NOTIFICATION
