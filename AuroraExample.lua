@@ -131,6 +131,7 @@ local BoogaTab      = CatGame:AddTab({ Title="Main Features", Icon="solar/danger
 local VisualsTab    = CatGame:AddTab({ Title="Visuals & ESP", Icon="solar/eye-bold" })
 
 local UiSettingsTab = CatUI:AddTab({ Title="Interface Settings", Icon="solar/settings-bold" })
+local TestTab       = CatUI:AddTab({ Title="Testing & Debug", Icon="solar/bug-bold" })
 
 -- ================================================================================
 --  WELCOME TAB (Showcasing New Elements: Images, Spaces, Code Blocks, Audio)
@@ -553,6 +554,54 @@ local SecConfig = UiRight:AddSection("Config Manager")
 Aurora.SaveManager:SetLibrary(Aurora)
 Aurora.SaveManager:SetFolder("AuroraSettings/BoogaBooga")
 Aurora.SaveManager:BuildConfigSection(SecConfig)
+
+-- ================================================================================
+--  TESTING & DEBUG TAB (Full Width & Constraint Tests)
+-- ================================================================================
+local SecTest = TestTab:AddSection("Full Width Responsiveness Test")
+
+SecTest:AddParagraph({
+    Title = "Component Scaling",
+    Content = "Since this section doesn't use 'AddColumns()', it takes the full width of the window. Notice how elements like Dropdowns and Inputs are elegantly constrained so they don't stretch horribly!"
+})
+
+SecTest:AddInput("ConstraintInput", {
+    Title = "Test Input Constraint",
+    Placeholder = "This should not span the entire screen...",
+})
+
+SecTest:AddDropdown("ConstraintDropdown", {
+    Title = "Test Dropdown Constraint",
+    Values = {"Option 1", "Option 2", "Option 3"},
+    Default = "Option 1",
+})
+
+SecTest:AddToggle("TestTgl", {
+    Title = "Test Toggle Switch",
+    Default = true
+})
+
+SecTest:AddSlider("TestSlider", {
+    Title = "Test Slider Constraints",
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Decimals = 1,
+    Suffix = "%"
+})
+
+SecTest:AddButton({
+    Title = "Test Button with Description",
+    Description = "This button has a secondary description text below the title. This is great for detailed explanations.",
+    Icon = "solar/star-bold",
+    Callback = function() print("Test button clicked!") end
+})
+
+local SecAlerts = TestTab:AddSection("Alert Variants")
+SecAlerts:AddAlert({ Title = "Information Alert", Content = "This is a standard information alert.", Type = "Info" })
+SecAlerts:AddAlert({ Title = "Success Alert", Content = "This is a success alert.", Type = "Success" })
+SecAlerts:AddAlert({ Title = "Warning Alert", Content = "This is a warning alert.", Type = "Warning" })
+SecAlerts:AddAlert({ Title = "Error Alert", Content = "This is an error alert.", Type = "Error" })
 
 -- ================================================================================
 --  INITIALIZATION NOTIFICATION
