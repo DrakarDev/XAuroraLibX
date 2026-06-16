@@ -82,11 +82,9 @@ local Window = Aurora:CreateWindow({
     SubTitle    = "Booga Booga Reborn Edition",
     Theme       = "Dark",
     Size        = UDim2.fromOffset(800, 560),
-    MinimizeKey = Enum.KeyCode.LeftShift, -- Preset to LeftShift by default on PC
+    MinimizeKey = Enum.KeyCode.LeftShift, -- PC only: keyboard shortcut to show/hide
     Acrylic     = true,                  -- Enables the premium glass/acrylic blur background
-    MobileButton = true,                 -- Forces the mobile float toggle button to show
-    MobileButtonIcon = "solar/star-bold",
-    MobileButtonPosition = UDim2.new(0, 20, 0, 150),
+    -- Mobile: FAB button and pill float buttons are created automatically on touch devices
     LazyLoad    = true,                  -- Enables progressive rendering (default)
     DelayPerElement = 0.01,
     DelayPerSection = 0.03,
