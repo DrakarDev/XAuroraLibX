@@ -1,7 +1,7 @@
-# AuroraLib v4.1
+# AuroraLib v4.5
 **Premium, Scalable, and Icon-Ready Custom Roblox UI Library**
 
-![Version](https://img.shields.io/badge/Version-4.1-red?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-4.5-red?style=for-the-badge)
 ![Lua](https://img.shields.io/badge/Language-Lua-blue?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Roblox-orange?style=for-the-badge)
 
@@ -9,19 +9,22 @@ AuroraLib is a premium UI library for Roblox executors. It features a glass-effe
 
 ---
 
-## 🚀 What's New in v4.1
+## 🚀 What's New in v4.5
 
-- 🔘 **Pill-Style Toggle Switch**: All toggles now use a modern iOS-style pill switch (34×18px) with a sliding knob, spring animation, and gloss highlight. Tap or click anywhere on the toggle row to flip it.
-- 🎚️ **Slider Knob Thumb**: Sliders now display a 12×12 circular knob at the fill endpoint that scales up on drag for tactile feedback, plus a gradient fill for visual depth.
-- 💥 **Button Ripple Effect**: Clicking any button spawns a circular ripple from center that expands and fades — pure material-design feel.
-- ✨ **Gradient Section Headers**: Section titles now feature a small accent dot + fading gradient underline instead of a flat line, much more premium.
+- 📱 **Smart Platform Auto-Detection**: No more manual mobile layout overrides! The library now automatically detects if a player is on a touch-only mobile device or a desktop PC:
+  - **On Mobile**: Displays floating pill-toggles for keybound features (e.g. Kill Aura) and a dedicated Show/Hide floating button for the menu. Buttons are dynamically sized and optimized for mobile screens.
+  - **On PC**: Hides floating buttons and maps actions purely to physical keybind inputs for clean desktop screen space.
+- 🔍 **Global Interactive Search Registry**: The search bar in the sidebar now performs a full-script search. You can instantly find and navigate to any interactive element (Toggles, Buttons, Sliders, Dropdowns, etc.) across all categories, tabs, and sub-tabs.
+- 🧹 **Complete Garbage Collection & Cleanup**: Calling `Window:Destroy()` or closing the library now completely unloads all elements, frames, and GUI components. It safely disconnects all global `UserInputService` listeners (e.g. Drag, Resize, Keybind handlers) to prevent memory leaks and performance degradation.
+- 💎 **Disabled Default Acrylic Glass Blur**: The Acrylic blur effect is now set to `false` by default. This avoids lighting system conflicts and low-end rendering lag on mobile devices. Can be enabled via the initialization config.
+- 🐛 **SubTab Selection Bugfix**: Resolved an issue in `subTabObj:Select()` where accessing `self.SubTabs` would trigger a nil error, successfully replacing it with the parent tab's traversal context.
+- 🎯 **Sidebar Navigation Selection Fix**: Corrected navigation behavior by ensuring category buttons properly trigger the tab selection flow (`tab:Select()`) rather than invoking internal event triggers.
+- 🔘 **Pill-Style Toggle Switch**: iOS-style pill switch (34×18px) with a sliding knob, spring animation, and gloss highlight.
+- 🎚️ **Slider Knob Thumb**: Displays a 12×12 circular knob at the fill endpoint that scales up on drag for tactile feedback.
+- 💥 **Button Ripple Effect**: Spawns a circular ripple from the click center that expands and fades — pure material-design feel.
+- ✨ **Gradient Section Headers**: Section titles feature a small accent dot + fading gradient underline.
 - 🌸 **New Theme: Sakura**: Cherry-blossom pink light theme — soft pinks, warm whites, rosy accents. Use `Aurora:SetTheme("Sakura")`.
-- ⚡ **Performance: TweenInfo Cache**: `tw()` now caches `TweenInfo` objects to avoid creating GC garbage on every animation call.
-- ⚡ **Performance: Icon Exponential Backoff**: `applyIcon` uses exponential backoff (50ms→800ms) instead of fixed 200ms polling — icons appear faster on load.
-- ⚡ **Performance: Hover Debounce**: `registerHover` guards against MouseEnter/Leave spam to prevent tween queuing.
-- ⚡ **Performance: ThemeObjs Pruning**: `UpdateTheme()` now removes destroyed objects from the observer list automatically.
-- 🌈 **Gradient Notification Progress Bar**: The countdown bar under notifications now has a vibrant-to-muted gradient fill.
-- 🌟 **Element Shimmer Highlight**: Element frames have a visible top-edge highlight with a gradient that creates a glass-like inner gloss.
+- ⚡ **Performance Improvements**: Tweens now cache `TweenInfo` objects, and hover interactions are debounced to prevent tween queue flooding.
 
 ---
 
@@ -51,19 +54,16 @@ Create the main window with custom configuration settings:
 local Window = Aurora:CreateWindow({
     Title        = "Aurora Premium",        -- Main header title
     SubTitle     = "Booga Booga Edition",   -- Small subtext next to/below title
-    Theme        = "Dark",                  -- Themes: "Dark", "Ocean", "Amethyst", "Neon", "BloodRed", "Midnight", "RGB", "AMOLED", "AshGray", "NeonPurple", "RoyalBlue", "DeepOcean", "MidnightBlue", "CosmicViolet", "CyberGlow"
-    Scale        = 1.0,                     -- UI scale multiplier
+    Theme        = "Dark",                  -- Themes: "Dark", "Ocean", "Amethyst", "Neon", "BloodRed", "Midnight", "RGB", "AMOLED", "Sakura", etc.
+    Scale        = 1.0,                     -- UI scale multiplier (0.7 to 2.0)
     Size         = UDim2.fromOffset(800, 560), -- Default window size
     MinimizeKey  = Enum.KeyCode.RightControl, -- Keybind to hide/show the entire GUI
-    Acrylic      = true,                    -- Enables the premium glass/acrylic blur background (Default: true)
-    MobileButton = true,                    -- Forces the mobile float toggle button to show (Default: false, automatically shows on Touch devices)
-    MobileButtonIcon = "solar/star-bold",   -- Custom Lucide/Solar icon for the mobile button
-    MobileButtonPosition = UDim2.new(0, 20, 0, 150), -- Custom initial position of mobile button (UDim2)
-    LazyLoad     = true,                    -- Enables progressive loading of elements to eliminate FPS lag (Default: false)
+    Acrylic      = false,                   -- Enables the premium glass/acrylic blur background (Default: false)
+    LazyLoad     = true,                    -- Enables progressive loading of elements to eliminate FPS lag (Default: true)
     DelayPerElement = 0.01,                 -- Loading delay in seconds per element (Default: 0.01)
     DelayPerSection = 0.02,                 -- Loading delay in seconds per section (Default: 0.02)
     DelayPerTab  = 0.05,                    -- Loading delay in seconds per tab (Default: 0.05)
-    FadeIn       = true                     -- Elements progressively fade in as they are instantiated (Default: false)
+    FadeIn       = true                     -- Elements progressively fade in as they are instantiated (Default: true)
 })
 ```
 
@@ -71,14 +71,15 @@ local Window = Aurora:CreateWindow({
 
 ## 👁️ Window Visibility & Styling API
 
-Control window visibility and frosted glass properties programmatically:
+Control window visibility, frosted glass properties, and clean destruction programmatically:
 
 ```lua
 Window:SetVisible(true)                     -- Shows the window
 Window:SetVisible(false)                    -- Hides the window
 Window:Toggle()                             -- Toggles the window visibility (fully synchronized with keybind and mobile button!)
+Window:Destroy()                            -- Completely destroys the UI and disconnects all UserInputService connections to prevent memory leaks
 
--- Frosted glass (acrylic) customization:
+-- Frosted glass (acrylic) customization (if Acrylic = true):
 Window:SetAcrylicTransparency(transparency) -- Tweens window transparency dynamically (e.g. 0.0 to 0.95)
 Window:SetBlurIntensity(intensity)          -- Tweens depth-of-field blur strength dynamically (e.g. 0.0 to 1.0)
 ```
@@ -107,7 +108,7 @@ Aurora:SetTheme("CyberGlow")
 ```
 
 ### 2. Stats Watermark HUD Overlay
-Adds a floating translucent status bar showing active game details, LocalPlayer headshot, and dynamic client stats (FPS/Ping):
+Adds a floating translucent status bar showing active game details, LocalPlayer name, and dynamic client stats (FPS/Ping):
 
 ```lua
 local Watermark = Aurora:Watermark({
@@ -131,21 +132,6 @@ local KeybindList = Aurora:KeybindList({
 
 KeybindList:Refresh()                                -- Force manual refresh of keybind items
 KeybindList:Destroy()                                -- Hide and clean up keybind HUD tracker
-```
-
-### 4. Draggable Status HUD Panel (NEW)
-Creates a draggable custom HUD monitor overlay to display any script status or values (e.g. state, active process, etc.):
-
-```lua
-local HUD = Aurora:CreateHUD({
-    Title = "Status Monitor",
-    Width = 220,                                     -- Width in pixels
-    Position = UDim2.new(0, 20, 0, 200)              -- Initial floating position
-})
-
-HUD:SetItem("Status", "Idle")                        -- Set item key and value
-HUD:SetItem("Activity", "Harvesting")
-HUD:Toggle(true)                                     -- Show/hide HUD
 ```
 
 ---
@@ -235,7 +221,7 @@ repeat task.wait(0.2) until keyVerified
 
 ## 🗂️ Navigation & Structure
 
-AuroraLib v4.0 supports a structured layout: **Categories ➔ Tabs (Pages) ➔ Sub-Tabs ➔ Columns ➔ Sections ➔ Elements**.
+AuroraLib v4.5 supports a structured layout: **Categories ➔ Tabs (Pages) ➔ Sub-Tabs ➔ Columns ➔ Sections ➔ Elements**.
 
 ### 1. Collapsible Sidebar Categories
 ```lua
@@ -363,7 +349,7 @@ MiningSec:AddColorpicker("ESPColor", {
 })
 ```
 
-### 5. Advanced Elements (Label, Divider, Space, Image, Audio, Code, Video, Alert, Separator)
+### 7. Advanced Elements (Label, Divider, Space, Image, Audio, Code, Video, Alert, Separator)
 
 #### Label:
 Inserts a simple read-only label.
@@ -440,17 +426,6 @@ Section:AddAlert({
     Content = "All user configurations are fully loaded and active.",
     Type = "Success" -- Types: "Info", "Warning", "Error", "Success"
 })
-```
-
-#### Progress Bar:
-Inserts a progress bar element to display loading/processing percentages.
-```lua
-local ProgressBar = Section:AddProgressBar("MyProgress", {
-    Title = "Farming Process"
-})
-
-ProgressBar:SetProgress(65) -- Set progress percentage (0 - 100)
-ProgressBar:SetTitle("Custom Farming Title")
 ```
 
 #### Text Separator:

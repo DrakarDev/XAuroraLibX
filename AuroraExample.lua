@@ -1,6 +1,6 @@
 --[[
 ================================================================================
-    AuroraLib v4.0 — Complete Booga Booga Example
+    AuroraLib v4.5 — Complete Booga Booga Example
     Ready to execute in any Roblox executor!
     
     Demonstrates:
