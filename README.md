@@ -9,28 +9,17 @@ AuroraLib is a premium UI library for Roblox executors. It features a glass-effe
 
 ---
 
-## 🚀 What's New in v4.5
+## 🚀 Features & What's New in v4.5
 
-- 📱 **Smart Platform Auto-Detection**: No more manual mobile layout overrides! The library now automatically detects if a player is on a touch-only mobile device or a desktop PC:
-  - **On Mobile**: Displays floating pill-toggles for keybound features (e.g. Kill Aura) and a dedicated Show/Hide floating button for the menu. Buttons are dynamically sized and optimized for mobile screens.
-  - **On PC**: Hides floating buttons and maps actions purely to physical keybind inputs for clean desktop screen space.
-- 🔍 **Global Interactive Search Registry**: The search bar in the sidebar now performs a full-script search. You can instantly find and navigate to any interactive element (Toggles, Buttons, Sliders, Dropdowns, etc.) across all categories, tabs, and sub-tabs.
-- 🧹 **Complete Garbage Collection & Cleanup**: Calling `Window:Destroy()` or closing the library now completely unloads all elements, frames, and GUI components. It safely disconnects all global `UserInputService` listeners (e.g. Drag, Resize, Keybind handlers) to prevent memory leaks and performance degradation.
-- 💎 **Disabled Default Acrylic Glass Blur**: The Acrylic blur effect is now set to `false` by default. This avoids lighting system conflicts and low-end rendering lag on mobile devices. Can be enabled via the initialization config.
-- 🐛 **SubTab Selection Bugfix**: Resolved an issue in `subTabObj:Select()` where accessing `self.SubTabs` would trigger a nil error, successfully replacing it with the parent tab's traversal context.
-- 🎯 **Sidebar Navigation Selection Fix**: Corrected navigation behavior by ensuring category buttons properly trigger the tab selection flow (`tab:Select()`) rather than invoking internal event triggers.
-- 🔘 **Pill-Style Toggle Switch**: iOS-style pill switch (34×18px) with a sliding knob, spring animation, and gloss highlight.
-- 🎚️ **Slider Knob Thumb**: Displays a 12×12 circular knob at the fill endpoint that scales up on drag for tactile feedback.
-- 💥 **Button Ripple Effect**: Spawns a circular ripple from the click center that expands and fades — pure material-design feel.
-- ✨ **Gradient Section Headers**: Section titles feature a small accent dot + fading gradient underline.
-- 🌸 **New Theme: Sakura**: Cherry-blossom pink light theme — soft pinks, warm whites, rosy accents. Use `Aurora:SetTheme("Sakura")`.
-- ⚡ **Performance Improvements**: Tweens now cache `TweenInfo` objects, and hover interactions are debounced to prevent tween queue flooding.
-
----
-
-## 🎨 Themes (25+ available)
-
-`Dark`, `Light`, `Ocean`, `Amethyst`, `Neon`, `BloodRed`, `Midnight`, `NeonCyber`, `ArcticFrost`, `CottonCandy`, `Orange`, `Cyanic`, `AmberGlow`, `DeepViolet`, `Charcoal`, `PearlWhite`, `Galaxy`, `AMOLED`, `AshGray`, `NeonPurple`, `RoyalBlue`, `DeepOcean`, `MidnightBlue`, `CosmicViolet`, **`Sakura`** 🌸, `RGB` (chroma)
+- 📱 **Smart Platform Auto-Detection**: No more manual mobile layout overrides! The library automatically detects if a player is on a touch-only mobile device or a desktop PC. Mobile features floating pill-toggles and a dedicated Show/Hide button, while PC maps actions purely to physical keybind inputs.
+- 🔍 **Global Interactive Search Registry**: A global search bar in the sidebar that performs a full-script search to instantly find and navigate to any interactive element (Toggles, Buttons, Sliders, Dropdowns, etc.) across all tabs.
+- 🔔 **Advanced Notification System**: Bouncy spring animations, actionable notifications with buttons, input fields inside notifications, and dynamic progress bars.
+- 📊 **Draggable HUD Monitors**: Create custom draggable on-screen display panels to track script stats, FPS, Ping, or any custom variables in real-time.
+- 🧹 **Complete Garbage Collection**: Safe script unloading (`Window:Destroy()`) to prevent memory leaks.
+- ☁️ **Cloud Configuration Sharing**: Share and load configurations seamlessly across the cloud using the built-in SaveManager cloud API.
+- 🎯 **Interactive Elements Enhancements**: Pill-style toggle switches, expanding slider knobs, expanding button ripple effects, and gradient section headers.
+- 🌸 **New Theme - Sakura**: Cherry-blossom pink light theme.
+- ⚡ **Performance Optimized**: Progressive rendering, debounced interactions, and tween caching.
 
 ---
 
@@ -46,7 +35,7 @@ local Aurora = loadstring(game:HttpGet(
 
 ---
 
-## 🖥️ Window Initialization
+## 🖥️ Window Initialization & API
 
 Create the main window with custom configuration settings:
 
@@ -54,44 +43,43 @@ Create the main window with custom configuration settings:
 local Window = Aurora:CreateWindow({
     Title        = "Aurora Premium",        -- Main header title
     SubTitle     = "Booga Booga Edition",   -- Small subtext next to/below title
-    Theme        = "Dark",                  -- Themes: "Dark", "Ocean", "Amethyst", "Neon", "BloodRed", "Midnight", "RGB", "AMOLED", "Sakura", etc.
+    Theme        = "Dark",                  -- Themes: "Dark", "Ocean", "Amethyst", "Neon", "Sakura", etc.
     Scale        = 1.0,                     -- UI scale multiplier (0.7 to 2.0)
     Size         = UDim2.fromOffset(800, 560), -- Default window size
     MinimizeKey  = Enum.KeyCode.RightControl, -- Keybind to hide/show the entire GUI
-    Acrylic      = false,                   -- Enables the premium glass/acrylic blur background (Default: false)
-    LazyLoad     = true,                    -- Enables progressive loading of elements to eliminate FPS lag (Default: true)
-    DelayPerElement = 0.01,                 -- Loading delay in seconds per element (Default: 0.01)
-    DelayPerSection = 0.02,                 -- Loading delay in seconds per section (Default: 0.02)
-    DelayPerTab  = 0.05,                    -- Loading delay in seconds per tab (Default: 0.05)
-    FadeIn       = true                     -- Elements progressively fade in as they are instantiated (Default: true)
+    Acrylic      = false,                   -- Enables premium glass/acrylic blur background
+    LazyLoad     = true,                    -- Enables progressive loading of elements (FPS friendly)
+    DelayPerElement = 0.01,                 -- Loading delay in seconds per element
+    DelayPerSection = 0.02,                 -- Loading delay in seconds per section
+    DelayPerTab  = 0.05,                    -- Loading delay in seconds per tab
+    FadeIn       = true                     -- Elements progressively fade in as they instantiate
 })
 ```
 
----
+### Window Methods
 
-## 👁️ Window Visibility & Styling API
-
-Control window visibility, frosted glass properties, and clean destruction programmatically:
+Control window properties programmatically at runtime:
 
 ```lua
-Window:SetVisible(true)                     -- Shows the window
-Window:SetVisible(false)                    -- Hides the window
-Window:Toggle()                             -- Toggles the window visibility (fully synchronized with keybind and mobile button!)
-Window:Destroy()                            -- Completely destroys the UI and disconnects all UserInputService connections to prevent memory leaks
-
--- Frosted glass (acrylic) customization (if Acrylic = true):
-Window:SetAcrylicTransparency(transparency) -- Tweens window transparency dynamically (e.g. 0.0 to 0.95)
-Window:SetBlurIntensity(intensity)          -- Tweens depth-of-field blur strength dynamically (e.g. 0.0 to 1.0)
+Window:SetVisible(true/false)               -- Shows or hides the window
+Window:Toggle()                             -- Toggles the window visibility state
+Window:SetMinimizeKey(Enum.KeyCode.F)       -- Changes the toggle hotkey
+Window:SetAcrylicTransparency(0.45)         -- Tweens window background transparency (e.g. 0.0 to 0.95)
+Window:SetBlurIntensity(1.0)                -- Tweens depth-of-field blur strength (e.g. 0.0 to 1.0)
+Window:Destroy()                            -- Completely destroys the UI and cleans memory
 ```
 
 ---
 
-## 🎨 Theme & HUD Customization API
+## 🎨 Themes (25+ Available)
 
-### 1. Custom Theme Creator
-You can programmatically register new custom color palettes at runtime. Missing keys will automatically fall back to default Dark theme values:
+**Built-in Themes:** `Dark`, `Light`, `Ocean`, `Amethyst`, `Neon`, `BloodRed`, `Midnight`, `NeonCyber`, `ArcticFrost`, `CottonCandy`, `Orange`, `Cyanic`, `AmberGlow`, `DeepViolet`, `Charcoal`, `PearlWhite`, `Galaxy`, `AMOLED`, `AshGray`, `NeonPurple`, `RoyalBlue`, `DeepOcean`, `MidnightBlue`, `CosmicViolet`, **`Sakura`** 🌸, `RGB` (chroma)
 
+### Theme Methods
 ```lua
+Aurora:SetTheme("CyberGlow")
+
+-- Create custom theme palette (Missing keys fallback to Dark theme)
 Aurora:CreateTheme("CyberGlow", {
     Background   = Color3.fromRGB(15, 10, 25),
     Sidebar      = Color3.fromRGB(18, 12, 30),
@@ -103,374 +91,268 @@ Aurora:CreateTheme("CyberGlow", {
     ToggleOn     = Color3.fromRGB(0, 255, 200),
     SliderFill   = Color3.fromRGB(0, 255, 200),
 })
-
-Aurora:SetTheme("CyberGlow")
-```
-
-### 2. Stats Watermark HUD Overlay
-Adds a floating translucent status bar showing active game details, LocalPlayer name, and dynamic client stats (FPS/Ping):
-
-```lua
-local Watermark = Aurora:Watermark({
-    Enabled  = true,
-    Title    = "Aurora Premium",                     -- Customizable title prefix
-    Position = UDim2.new(0, 20, 0, 20)               -- Custom Screen Gui position
-})
-
-Watermark:SetTitle("Custom Overlay Title")           -- Dynamically update title
-Watermark:Destroy()                                  -- Hide and clean up stats HUD
-```
-
-### 3. Keybinds List HUD Tracker
-Creates a draggable floating HUD box that dynamically scans `Aurora.Options` for registered hotkeys and displays them. It auto-updates whenever keys are bound or changed in the menu:
-
-```lua
-local KeybindList = Aurora:KeybindList({
-    Enabled  = true,
-    Position = UDim2.new(1, -200, 0.5, -100)         -- Initial floating position
-})
-
-KeybindList:Refresh()                                -- Force manual refresh of keybind items
-KeybindList:Destroy()                                -- Hide and clean up keybind HUD tracker
 ```
 
 ---
 
-## 💬 Modal Dialog System
+## 🛡️ Key System & Verification
 
-Create premium centered modal overlays on top of the main window with elastic open/close animations:
-
-```lua
-Window:Dialog({
-    Title = "Premium Modal Dialog",
-    Content = "This is a premium modal popup block that stays centered and overlays the script menu.",
-    Buttons = {
-        {
-            Title = "Cancel",
-            Callback = function()
-                print("Clicked Cancel")
-            end
-        },
-        {
-            Title = "Confirm Action",
-            Callback = function()
-                print("Clicked Confirm")
-            end
-        }
-    }
-})
-```
-
----
-
-## 💾 SaveManager API
-
-AuroraLib contains a built-in SaveManager to easily persist script options.
-
-```lua
--- Initialize SaveManager
-Aurora.SaveManager:SetLibrary(Aurora)
-Aurora.SaveManager:SetFolder("AuroraSettings/BoogaBooga")
-
--- Build config options inside a UI section (creates input, dropdown, buttons automatically)
--- This automatically appends the "Auto-save on change" option checkbox!
-Aurora.SaveManager:BuildConfigSection(Section)
-
--- Load previously autoloaded configurations at startup
-Aurora.SaveManager:LoadAutoloadConfig()
-```
-
-### Native Autosave:
-When `Auto-save on change` is toggled on in the UI, any modification to interactive elements (`Toggles`, `Sliders`, `Dropdowns`, `Keybinds`, `Colorpickers`, and `Inputs`) will trigger an automatic save.
-
-### Excluded Options:
-To ignore specific keybinds or settings from config saves (e.g. theme selectors, menu hotkeys):
-```lua
-Aurora.SaveManager:IgnoreIndexes({ "ThemeSelector", "AimbotBind" })
-```
-
----
-
-## 🔑 Built-in Key System
-
-AuroraLib has a built-in premium license verification system. It blocks your script execution, prompts the user to enter a key with custom styled overlays, and supports caching keys locally in the Roblox `workspace/` folder.
+Built-in premium license verification system. Blocks script execution and prompts the user to enter a key.
 
 ```lua
 local keyVerified = false
 Aurora.KeySystem.new({
     Title = "Aurora Verification",
     SubTitle = "License Verification Required",
-    Note = "Get your free license key from our Discord server. Keys update every 24 hours!",
+    Note = "Get your free license key from our Discord server.",
     Keys = {"AuroraKey2026", "DevKey"},       -- Local valid keys list
     KeyLink = "https://discord.gg/auroralib", -- Link to obtain key
     SaveKey = true,                           -- Cache verified key to file
     FileName = "AuroraLicense_Cache.txt",     -- Cache file name in workspace/
     OnSuccess = function()
         keyVerified = true
-    end,
-    CustomValidate = function(key)            -- Optional custom validation (e.g. remote API fetch)
-        return key == "SpecialRemoteKey"
     end
 })
 
--- Wait for validation success
 repeat task.wait(0.2) until keyVerified
 ```
 
 ---
 
-## 🗂️ Navigation & Structure
+## 💾 SaveManager (Local & Cloud Configurations)
 
-AuroraLib v4.5 supports a structured layout: **Categories ➔ Tabs (Pages) ➔ Sub-Tabs ➔ Columns ➔ Sections ➔ Elements**.
+Built-in SaveManager to easily persist script options locally and share them over the cloud.
 
-### 1. Collapsible Sidebar Categories
 ```lua
-local CatGame = Window:AddCategory("Booga Booga")
+Aurora.SaveManager:SetLibrary(Aurora)
+Aurora.SaveManager:SetFolder("AuroraSettings/MyGame")
+
+-- Build config options inside a UI section automatically
+Aurora.SaveManager:BuildConfigSection(Section)
+
+-- Exclude specific elements from saving
+Aurora.SaveManager:IgnoreIndexes({ "ThemeSelector", "AimbotBind" })
+
+-- Ignore UI aesthetic settings
+Aurora.SaveManager:IgnoreThemeSettings()
+
+-- Load autoload configurations
+Aurora.SaveManager:LoadAutoloadConfig()
 ```
 
-### 2. Tab Pages (Under Categories)
+### Cloud API Methods
 ```lua
-local BoogaTab = CatGame:AddTab({ Title = "Main Features", Icon = "solar/danger-bold" })
+Aurora.SaveManager:SaveCloud("ConfigName", "AuthorName", "Best legit config!", "GameName")
+Aurora.SaveManager:LoadCloud("ConfigName")
+Aurora.SaveManager:RefreshCloudConfigList()
 ```
 
-### 3. Horizontally Scrollable Sub-Tabs
-Adds sub-navigation pages under tabs. If tabs overflow, the bar scroll-wheels horizontally automatically.
+---
+
+## 📊 HUDs, Watermarks & Overlays
+
+### 1. Stats Watermark
 ```lua
-local SubCombat = BoogaTab:AddSubTab("Combat")
-local SubAuto   = BoogaTab:AddSubTab("Automation")
+local Watermark = Aurora:Watermark({ Enabled = true, Title = "Aurora Premium" })
+Watermark:SetTitle("New Title")
+Watermark:Destroy()
 ```
 
-### 4. Layout Columns & Sections
-Inside any tab or sub-tab page, split elements into a dual-column layout. Sections can optionally be made collapsible with a rotating chevron:
+### 2. Keybinds Tracker HUD
 ```lua
-local LeftCol, RightCol = SubCombat:AddColumns()
+local KeybindList = Aurora:KeybindList({ Enabled = true })
+KeybindList:Refresh()
+KeybindList:Destroy()
+```
 
--- Standard Section
-local MiningSec = LeftCol:AddSection("Mining Settings")
+### 3. Custom Script HUD
+A custom draggable HUD panel for displaying real-time metrics.
+```lua
+local HUDObj = Aurora:CreateHUD({ Title = "Script Status", Width = 220 })
+HUDObj:SetItem("Status", "Idle")
+HUDObj:SetItem("FPS", "60")
+HUDObj:Toggle(true)
+```
 
--- Collapsible Section (starts collapsed by default)
-local CollapsibleSec = RightCol:AddSection("Extra Settings", {
-    Collapsible = true,
-    DefaultExpanded = false
+---
+
+## 💬 Notifications & Dialogs
+
+### Advanced Notifications
+Trigger notifications with animations, inputs, or dynamic progress bars.
+
+```lua
+-- Standard
+Aurora:Notify({ Title = "Loaded", Content = "Features ready.", Type = "Success", Duration = 5 })
+
+-- Actionable (Buttons)
+Aurora:Notify({
+    Title = "Warning", Content = "Proceed?", Type = "Warning", Duration = 8,
+    Buttons = { { Title = "Confirm", Callback = function() end }, { Title = "Cancel" } }
+})
+
+-- Input field
+Aurora:Notify({
+    Title = "Access", Content = "Enter key", Type = "Info", Duration = 0,
+    Input = true, InputPlaceholder = "Type...", InputCallback = function(text) print(text) end
+})
+
+-- Dynamic Progress
+local notif = Aurora:Notify({ Title = "Downloading", Content = "Wait...", Duration = 0 })
+notif:SetProgress(0.5) -- Updates bar to 50%
+notif:Update({ Title = "Done", Content = "Finished!", Type = "Success", Duration = 3 })
+notif:Close() -- Manually closes the notification
+```
+
+### Modal Dialogs
+Centered modal overlays on top of the main UI window.
+```lua
+Window:Dialog({
+    Title = "Premium Modal", Content = "Are you sure you want to delete this config?",
+    Buttons = { { Title = "Cancel" }, { Title = "Delete", Callback = function() end } }
 })
 ```
 
 ---
 
-## ⚙️ Interactive UI Elements
+## 🗂️ Navigation & Layout Structure
 
-### 💡 Element Tooltips
-Interactive elements (Toggles, Sliders, Dropdowns, Buttons, Inputs, Keybinds, and Colorpickers) support an optional `Tooltip` parameter in their configuration table. Hovering the element displays a sleek cursor-following information box.
+The library uses a nested hierarchy: **Categories ➔ Tabs ➔ Sub-Tabs ➔ Columns ➔ Sections**.
 
 ```lua
-Section:AddToggle("MyToggle", {
-    Title = "Example Toggle",
-    Tooltip = "This is a premium hover tooltip that dynamically tracks your cursor!",
-    Default = false
-})
+local CatGame = Window:AddCategory("Main Features", "solar/danger-bold")
+local MainTab = CatGame:AddTab({ Title = "Combat", Icon = "solar/danger-bold" })
+local SubMelee = MainTab:AddSubTab("Melee")
+local LeftCol, RightCol = SubMelee:AddColumns()
+
+-- Sections can be collapsible
+local KillAuraSec = LeftCol:AddSection("Kill Aura")
+local ExtraSec = RightCol:AddSection("Extra Settings", { Collapsible = true, DefaultExpanded = false })
+ExtraSec:SetCollapsed(true) -- Change collapse state at runtime
 ```
 
-### 1. Toggles (with Inline Chaining)
+---
+
+## ⚙️ Elements & Methods API
+
+All UI elements returned by the library expose specific methods to modify them programmatically at runtime.  
+**Global Visibility:** Every element has a `:SetVisible(boolean)` method.
+
+### Toggles
 ```lua
-local MineTgl = MiningSec:AddToggle("MineAura", {
-    Title = "Mine Aura",
-    Description = "Automatically mines minerals within range.",
-    Default = false
-})
+local Tgl = Section:AddToggle("Aimbot", { Title = "Aimbot", Tooltip = "Auto aim.", Default = false })
 
--- Chain inline Keybind
-MineTgl:AddKeybind("MineBind", { Default = Enum.KeyCode.F })
+Tgl:AddKeybind("AimbotBind", { Default = Enum.KeyCode.E })
+Tgl:AddColorpicker("AimbotColor", { Default = Color3.fromRGB(255, 0, 0) })
 
--- Chain inline Colorpicker
-MineTgl:AddColorpicker("MineIndicatorColor", { Default = Color3.fromRGB(255, 60, 60) })
+Tgl:SetValue(true)
+Tgl:OnChanged(function(val) print(val) end)
 ```
 
-### 2. Direct-Entry Sliders
+### Sliders
 ```lua
-MiningSec:AddSlider("MineRange", {
-    Title = "Mine Range",
-    Min = 5,
-    Max = 55,
-    Default = 15,
-    Decimals = 0,
-    Suffix = " studs",
-    Callback = function(val)
-        print("Range changed to:", val)
-    end
-})
+local Sld = Section:AddSlider("FOV", { Title = "FOV", Min = 10, Max = 500, Default = 150, Suffix = " px" })
+
+Sld:SetValue(200)
+Sld:OnChanged(function(val) print(val) end)
 ```
 
-### 3. Searchable Dropdowns
+### Dropdowns
 ```lua
-MiningSec:AddDropdown("OreFilter", {
-    Title = "Target Ores",
-    Values = { "Gold", "Iron", "God Rock", "Mojo" },
-    Default = "Gold",
-    Multi = false, -- Single-select (use Multi = true for multi-select)
-    Callback = function(val)
-        print("Selected ore:", val)
-    end
-})
+local Drop = Section:AddDropdown("TargetMode", { Title = "Target Mode", Values = { "Head", "Torso" }, Default = "Head", Multi = false })
+
+Drop:Refresh({ "Head", "Torso", "Random" }) -- Update available options
+Drop:SetValue("Random")                     -- Update selection
+Drop:SetValues({ "Head", "Torso" })         -- Update multiple selections (if Multi = true)
+Drop:OnChanged(function(val) print(val) end)
 ```
 
-### 4. Standalone Inputs
+### Inputs (Text Boxes)
 ```lua
-MiningSec:AddInput("ClanTag", {
-    Title = "Clan Tag Customizer",
-    Placeholder = "Enter tag...",
-    Default = "Aurora",
-    Callback = function(txt)
-        print("Clan tag changed:", txt)
-    end
-})
+local Inp = Section:AddInput("CustomTag", { Title = "Chat Tag", Default = "[VIP]" })
+
+Inp:SetValue("[ADMIN]")
+Inp:OnChanged(function(text) print(text) end)
 ```
 
-### 5. Standalone Keybinds
-Standalone keybind element. Supports binding to both standard keyboard keys AND mouse buttons (like `MouseButton2` / right click, displaying as `MB2` in the UI):
+### Keybinds & Colorpickers (Standalone)
 ```lua
-MiningSec:AddKeybind("AimbotHotkey", {
-    Title = "Aimbot Keybind",
-    Default = Enum.KeyCode.E,
-    Callback = function(key)
-        print("Aimbot key changed to:", key)
-    end
-})
+local Key = Section:AddKeybind("Panic", { Title = "Panic", Default = Enum.KeyCode.P })
+Key:SetValue(Enum.KeyCode.L)
+Key:OnChanged(function(k) print(k) end)
+
+local CP = Section:AddColorpicker("ESPCol", { Title = "Color", Default = Color3.fromRGB(0, 255, 170) })
+CP:SetValue(Color3.fromRGB(255, 0, 0))
+CP:SetValueRGB(Color3.new(1, 0, 0), 0.5) -- Color with transparency
+CP:OnChanged(function(c) print(c) end)
 ```
 
-### 6. Standalone Colorpickers
-Standalone 2D SV Canvas colorpicker selector element:
+### Progress Bars
 ```lua
-MiningSec:AddColorpicker("ESPColor", {
-    Title = "ESP Color Selector",
-    Default = Color3.fromRGB(0, 255, 170),
-    Callback = function(color)
-        print("Selected color:", color)
-    end
-})
+local Prog = Section:AddProgressBar("FarmingProg", { Title = "Farming Progress" })
+
+Prog:SetProgress(50)      -- Set fill to 50%
+Prog:SetValue(50)         -- Alias to SetProgress
+Prog:SetTitle("Mining...")-- Update the label
 ```
 
-### 7. Advanced Elements (Label, Divider, Space, Image, Audio, Code, Video, Alert, Separator)
-
-#### Label:
-Inserts a simple read-only label.
+### Advanced Text & Formatting Elements
 ```lua
-local LabelObj = Section:AddLabel("StatusLabel", "System Status: Operating normally")
-LabelObj:SetText("System Status: Updating...")
-```
+local Lbl = Section:AddLabel("InfoLabel", "Status: Active")
+Lbl:SetText("New Status")
 
-#### Divider:
-Inserts a thin horizontal separator line.
-```lua
+local Btn = Section:AddButton({ Title = "Execute", Description = "Runs script", Icon = "solar/play-bold" })
+Btn:SetTitle("Running")
+Btn:SetDesc("Executing now...")
+
+local Para = Section:AddParagraph({ Title = "Note", Content = "Read carefully." })
+Para:SetTitle("Updated Note")
+Para:SetContent("New content")
+
+Section:AddSpace(10)
 Section:AddDivider()
+Section:AddSeparator("MEDIA SECTION")
+Section:AddAlert({ Title = "Warning", Content = "Risk!", Type = "Warning" })
 ```
 
-#### Space:
-Inserts a blank gap of a specified height.
+### Media Elements
 ```lua
-Section:AddSpace(12)
-```
+local Img = Section:AddImage("Logo", { Size = UDim2.fromOffset(200, 100), Image = "rbxassetid://10849890695" })
+Img:SetImage("rbxassetid://new_id")
 
-#### Image:
-Displays a static asset or logo.
-```lua
-local ImageObj = Section:AddImage("LogoGraphic", {
-    Size = UDim2.fromOffset(200, 100),
-    Image = "rbxassetid://10849890695"
-})
-ImageObj:SetImage("rbxassetid://new_id")
-```
+local Audio = Section:AddAudio("Music", { Title = "BGM", SoundId = 1843431602, Volume = 0.5, Looped = true })
+Audio:Play()
+Audio:Stop()
+Audio:SetVolume(1.0)
+Audio:SetSoundId(123456789)
 
-#### Audio Player:
-A retro audio play/stop control bar.
-```lua
-local SoundObj = Section:AddAudio("BGMusic", {
-    Title = "Game Music Loop",
-    SoundId = 1843431602,
-    Volume = 0.4,
-    Looped = true
-})
-```
+local Video = Section:AddVideo("Trailer", { Title = "Showcase", Video = 5608688234, AutoPlay = true, Looped = true, Height = 150 })
+Video:Play()
+Video:Pause()
+Video:SetVolume(0.5)
 
-#### Code Block:
-A code box with code font styling and a working Copy button.
-```lua
-local CodeObj = Section:AddCode("LoadScript", {
-    Title = "Load Script Raw",
-    Code = "print('Hello Aurora')"
-})
-CodeObj:SetCode("print('Hello World')")
-```
-
-#### Video Player:
-A premium video player panel that plays Roblox video assets with custom playback controls.
-```lua
-local VideoObj = Section:AddVideo("DemoVid", {
-    Title = "Cool Trailer Video",
-    Video = 5608688234,      -- Roblox video asset ID (rbxassetid://... or number)
-    Volume = 0.3,            -- Default volume (0.0 to 1.0)
-    Looped = true,           -- Loops video play (Default: true)
-    AutoPlay = true,         -- Plays on load (Default: true)
-    Height = 150             -- Custom player height (Default: 160)
-})
-
-VideoObj:Play()
-VideoObj:Pause()
-VideoObj:SetVolume(0.5)
-```
-
-#### Alert Banner:
-Inserts a beautiful warning, info, error, or success alert block:
-```lua
-Section:AddAlert({
-    Title = "Database Sync",
-    Content = "All user configurations are fully loaded and active.",
-    Type = "Success" -- Types: "Info", "Warning", "Error", "Success"
-})
-```
-
-#### Text Separator:
-Inserts a horizontal separator line with a centered bold text label:
-```lua
-Section:AddSeparator("DEVELOPER SETTINGS")
+local Code = Section:AddCode("ScriptBox", { Title = "Copy Me", Code = "print('Hello')" })
+Code:SetCode("print('Goodbye')")
 ```
 
 ---
 
-## 👁️ Dynamic Element Visibility (SetVisible)
+## 🌐 Global Options API
 
-All elements returned by the library (such as Toggles, Sliders, Dropdowns, Paragraphs, Alerts, separators, etc.) expose a `:SetVisible(state)` method. This allows you to show or hide options dynamically at runtime. When elements are hidden, the layout automatically shifts items up to fill the empty space.
-
-```lua
-local AimbotTgl = Section:AddToggle("Aimbot", { Title = "Enable Aimbot" })
-local FOVSlider = Section:AddSlider("FOV", { Title = "FOV Range", Default = 90 })
-
--- Hide FOV slider initially
-FOVSlider:SetVisible(false)
-
--- Dynamically toggle visibility based on main Aimbot switch
-AimbotTgl:OnChanged(function(v)
-    FOVSlider:SetVisible(v)
-end)
-```
-
----
-
-## 🎨 Global Options API
-
-Retrieve any UI element's active value programmatically using its `id`:
+Retrieve any UI element's active value dynamically from anywhere in your script using its registered ID:
 
 ```lua
-local mineAuraActive = Aurora.Options.MineAura.Value       -- Boolean
-local targetOre      = Aurora.Options.OreFilter.Value      -- String or Table
-local rangeValue     = Aurora.Options.MineRange.Value      -- Number
-local clanTagStr     = Aurora.Options.ClanTag.Value        -- String
+local isAimbotEnabled = Aurora.Options.Aimbot.Value
+local currentFOV      = Aurora.Options.FOV.Value
+local currentFilters  = Aurora.Options.ESPFilters.Value
+local customTagText   = Aurora.Options.CustomTag.Value
 ```
 
 ---
 
 ## 🛠️ Complete Integration Example
 
-To view a fully constructed script showing how all of these components work together, please refer to the [AuroraExample.lua](file:///c:/Users/locop/OneDrive/Desktop/scritp/Deds/UILibrary/AuroraExample.lua) file inside the project directory.
+To view a fully constructed script showing how all of these components work together, please refer to the `AuroraExample.lua` file included in the library directory. It features a complete mock setup for a Booga Booga style script.
 
 ---
 
