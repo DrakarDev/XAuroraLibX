@@ -86,9 +86,9 @@ local Window = Aurora:CreateWindow({
     Acrylic     = true,                  -- Enables the premium glass/acrylic blur background
     -- Mobile: FAB button and pill float buttons are created automatically on touch devices
     LazyLoad    = true,                  -- Enables progressive rendering (default)
-    DelayPerElement = 0.01,
-    DelayPerSection = 0.03,
-    DelayPerTab     = 0.08,
+    DelayPerElement = 0.05,
+    DelayPerSection = 0.15,
+    DelayPerTab     = 0.25,
     FadeIn      = true,
 })
 
