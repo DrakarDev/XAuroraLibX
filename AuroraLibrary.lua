@@ -5748,21 +5748,27 @@ function Section:AddViewport(id, cfg)
                     or clone:FindFirstChildWhichIsA("BasePart")
                 if root then clone.PrimaryPart = root end
             end
+            -- PivotTo FIRST so bounding box is accurate inside the WorldModel
             pcall(function() clone:PivotTo(CFrame.new(Vector3.zero)) end)
 
-            -- Count parts for footer
+            -- Ensure all parts are visible (some R15/R6 chars have parts hidden)
             for _, d in ipairs(clone:GetDescendants()) do
-                if d:IsA("BasePart") then partCount = partCount + 1 end
+                if d:IsA("BasePart") then
+                    partCount = partCount + 1
+                    -- Force LocalTransparencyModifier off (common issue in ViewportFrame)
+                    pcall(function() d.LocalTransparencyModifier = 0 end)
+                end
             end
         elseif clone:IsA("BasePart") then
             clone.CFrame = CFrame.new(Vector3.zero)
             partCount = 1
+            pcall(function() clone.LocalTransparencyModifier = 0 end)
         end
 
         currentModel = clone
         modelRoot = clone:IsA("Model") and clone or nil
 
-        -- Calculate bounding box for camera fit
+        -- Calculate bounding box for camera fit (after PivotTo)
         local bbSize = Vector3.new(4, 6, 4)
         pcall(function()
             if clone:IsA("Model") then
@@ -5786,36 +5792,8 @@ function Section:AddViewport(id, cfg)
         local maxDim = math.max(bbSize.X, bbSize.Y, bbSize.Z)
         camDistCur = math.clamp(maxDim * 1.5, 3, 50)
 
-        -- Animate Humanoid if present (idle pose)
-        pcall(function()
-            local hum = clone:FindFirstChildWhichIsA("Humanoid")
-            if hum then
-                local animator = hum:FindFirstChildWhichIsA("Animator") or Instance.new("Animator", hum)
-                -- Try to play idle animation
-                local animController = clone:FindFirstChild("Animate")
-                if animController then
-                    local idleAnim = animController:FindFirstChild("idle")
-                    if idleAnim then
-                        local animObj = idleAnim:FindFirstChildWhichIsA("Animation")
-                        if animObj then
-                            pcall(function() animator:LoadAnimation(animObj):Play() end)
-                        end
-                    end
-                end
-            end
-        end)
-
-        -- Hide placeholder with fade
+        -- Hide placeholder
         phFrame.Visible = false
-
-        -- Entrance animation: fade in all parts
-        for _, desc in ipairs(clone:GetDescendants()) do
-            if desc:IsA("BasePart") and desc.Transparency < 1 then
-                local targetTrans = desc.Transparency
-                desc.Transparency = 1
-                tw(desc, { Transparency = targetTrans }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            end
-        end
 
         updateFooter(modelName, partCount)
         updateCamera()
