@@ -5144,28 +5144,32 @@ function Section:AddLiveStat(id, cfg)
     })
 
     local titleLbl = make("TextLabel", {
-        Size = UDim2.new(0.5, -40, 1, 0),
+        Size = UDim2.new(0.35, -40, 1, 0),
         Position = UDim2.new(0, s(36), 0, 0),
         BackgroundTransparency = 1,
         Text = cfg.Title or "Stat",
         TextColor3 = thm.SubText,
         TextSize = fs(13),
+        TextScaled = true,
         Font = Enum.Font.GothamMedium,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = inner
     })
+    make("UITextSizeConstraint", { MaxTextSize = fs(13), MinTextSize = 8, Parent = titleLbl })
 
     local valLbl = make("TextLabel", {
-        Size = UDim2.new(0.5, -10, 1, 0),
-        Position = UDim2.new(0.5, 0, 0, 0),
+        Size = UDim2.new(0.65, -10, 1, 0),
+        Position = UDim2.new(0.35, 0, 0, 0),
         BackgroundTransparency = 1,
         Text = tostring(obj.Value),
         TextColor3 = cfg.Color or thm.Text,
         TextSize = fs(15),
+        TextScaled = true,
         Font = Enum.Font.GothamBold,
         TextXAlignment = Enum.TextXAlignment.Right,
         Parent = inner
     })
+    make("UITextSizeConstraint", { MaxTextSize = fs(15), MinTextSize = 8, Parent = valLbl })
     
     -- Subtle neon glow on the text
     local glow = make("UIStroke", {
