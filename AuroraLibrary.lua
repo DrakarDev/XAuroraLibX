@@ -5119,6 +5119,78 @@ function Section:AddLabel(id, text)
     return obj
 end
 
+function Section:AddLiveStat(id, cfg)
+    local thm = Aurora.Theme
+    cfg = cfg or {}
+    local obj = { Type="LiveStat", Value=cfg.Default or "", id=id }
+
+    local f = elemFrame(self.Container)
+    local inner = make("Frame", {
+        Size = UDim2.new(1, 0, 0, s(35)),
+        BackgroundColor3 = thm.Element,
+        BackgroundTransparency = 0.3,
+        Parent = f
+    })
+    make("UICorner", { CornerRadius = UDim.new(0, s(6)), Parent = inner })
+    make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = inner })
+
+    local icon = make("ImageLabel", {
+        Size = ss(18, 18),
+        Position = us(10, 8),
+        BackgroundTransparency = 1,
+        ImageColor3 = cfg.IconColor or thm.ToggleOn,
+        Image = getIcon(cfg.Icon or "solar/chart-bold"),
+        Parent = inner
+    })
+
+    local titleLbl = make("TextLabel", {
+        Size = UDim2.new(0.5, -40, 1, 0),
+        Position = us(36, 0),
+        BackgroundTransparency = 1,
+        Text = cfg.Title or "Stat",
+        TextColor3 = thm.SubText,
+        TextSize = fs(13),
+        Font = Enum.Font.GothamMedium,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = inner
+    })
+
+    local valLbl = make("TextLabel", {
+        Size = UDim2.new(0.5, -10, 1, 0),
+        Position = UDim2.new(0.5, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = tostring(obj.Value),
+        TextColor3 = cfg.Color or thm.Text,
+        TextSize = fs(15),
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        Parent = inner
+    })
+    
+    -- Subtle neon glow on the text
+    local glow = make("UIStroke", {
+        Color = cfg.Color or thm.ToggleOn,
+        Thickness = 0.5,
+        Transparency = 0.3,
+        Parent = valLbl
+    })
+
+    function obj:SetText(t, color)
+        self.Value = t
+        valLbl.Text = tostring(t)
+        if color then
+            valLbl.TextColor3 = color
+            glow.Color = color
+            icon.ImageColor3 = color
+        end
+    end
+    function obj:SetValue(t, color) self:SetText(t, color) end
+
+    addVisibilityAPI(obj, f)
+    Aurora.Options[id] = obj
+    return obj
+end
+
 function Section:AddSpace(height)
     local f = make("Frame", {
         Size = UDim2.new(1, 0, 0, s(height or 10)),

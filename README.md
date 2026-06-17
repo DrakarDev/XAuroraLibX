@@ -301,6 +301,15 @@ Prog:SetTitle("Mining...")-- Update the label
 local Lbl = Section:AddLabel("InfoLabel", "Status: Active")
 Lbl:SetText("New Status")
 
+local Stat = Section:AddLiveStat("GoldCoins", { 
+    Title = "Total Gold", 
+    Default = "0",
+    Icon = "solar/wad-of-money-bold",  -- Any icon name
+    Color = Color3.fromRGB(255, 215, 0) -- Neon glow color
+})
+-- Update the glowing stat in real-time, optionally changing its color:
+Stat:SetText("1500", Color3.fromRGB(0, 255, 100)) 
+
 local Btn = Section:AddButton({ Title = "Execute", Description = "Runs script", Icon = "solar/play-bold" })
 Btn:SetTitle("Running")
 Btn:SetDesc("Executing now...")
