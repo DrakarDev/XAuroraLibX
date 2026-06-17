@@ -5135,8 +5135,8 @@ function Section:AddLiveStat(id, cfg)
     make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = inner })
 
     local icon = make("ImageLabel", {
-        Size = ss(18, 18),
-        Position = us(10, 8),
+        Size = UDim2.new(0, s(18), 0, s(18)),
+        Position = UDim2.new(0, s(10), 0, s(8)),
         BackgroundTransparency = 1,
         ImageColor3 = cfg.IconColor or thm.ToggleOn,
         Image = getIcon(cfg.Icon or "solar/chart-bold"),
@@ -5145,7 +5145,7 @@ function Section:AddLiveStat(id, cfg)
 
     local titleLbl = make("TextLabel", {
         Size = UDim2.new(0.5, -40, 1, 0),
-        Position = us(36, 0),
+        Position = UDim2.new(0, s(36), 0, 0),
         BackgroundTransparency = 1,
         Text = cfg.Title or "Stat",
         TextColor3 = thm.SubText,
