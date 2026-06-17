@@ -5139,7 +5139,7 @@ function Section:AddLiveStat(id, cfg)
         Position = UDim2.new(0, s(10), 0, s(8)),
         BackgroundTransparency = 1,
         ImageColor3 = cfg.IconColor or thm.ToggleOn,
-        Image = getIcon(cfg.Icon or "solar/chart-bold"),
+        Image = Aurora:GetIcon(cfg.Icon or "solar/chart-bold") or "",
         Parent = inner
     })
 
