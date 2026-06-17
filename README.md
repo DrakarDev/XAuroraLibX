@@ -355,7 +355,9 @@ local VP = Section:AddViewport("MyViewer", {
 
 ### Loading Models
 ```lua
--- 1. Show a player's character (by Player object, name string, or "local")
+-- 1. Show a player's character (Live Tracking)
+-- Automatically tracks the player's character, updating the 3D model every time they respawn!
+-- Fully supports R15/R6 characters without missing invisible parts.
 VP:SetPlayer("local")                      -- Your own character
 VP:SetPlayer("PlayerName")                 -- Any player in the server by name
 VP:SetPlayer(game.Players.LocalPlayer)     -- By Player object
