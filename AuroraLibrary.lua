@@ -3663,7 +3663,7 @@ function Aurora:CreateWindow(cfg)
     })
 
     local tabScroll=make("ScrollingFrame",{
-        Size=UDim2.new(1,0,1,-s(150)),Position=UDim2.new(0,0,0,s(150)),
+        Size=UDim2.new(1,0,1,-s(194)),Position=UDim2.new(0,0,0,s(150)),
         BackgroundTransparency=1,ScrollBarThickness=s(2),ScrollBarImageColor3=thm.Scrollbar,Parent=sidebar,
     })
     local slay=make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(2),Parent=tabScroll})
