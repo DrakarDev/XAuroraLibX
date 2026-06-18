@@ -346,7 +346,7 @@ local function createAcrylic(frame)
         local height = (w - x).Magnitude
         
         part.CFrame = CFrame.fromMatrix((v + x) / 2, cameraCF.XVector, cameraCF.YVector, cameraCF.ZVector)
-        mesh.Scale = Vector3.new(width, height, 0)
+        mesh.Scale = Vector3.new(width, height, 0.001)
     end
     
     table.insert(connections, camera:GetPropertyChangedSignal("CFrame"):Connect(updatePosition))
@@ -3609,7 +3609,7 @@ function Aurora:CreateWindow(cfg)
     local sidebarTrans = self.Acrylic and 0.6 or 0.08
     local sidebar=make("Frame",{Size=UDim2.new(0,s(192),1,0),BackgroundColor3=thm.Sidebar,BackgroundTransparency=sidebarTrans,Parent=main})
     make("UICorner",{CornerRadius=sz(20),Parent=sidebar})
-    local sbPatch=make("Frame",{Size=UDim2.new(0,s(20),1,0),Position=UDim2.new(1,-s(20),0,0),BackgroundColor3=thm.Sidebar,BackgroundTransparency=sidebarTrans,BorderSizePixel=0,Parent=sidebar})
+    local sbPatch=make("Frame",{Name="CornerPatch",Size=UDim2.new(0,s(20),1,0),Position=UDim2.new(1,-s(20),0,0),BackgroundColor3=thm.Sidebar,BackgroundTransparency=sidebarTrans,BorderSizePixel=0,Parent=sidebar})
     make("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,0,0,0),BackgroundColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=0.88,BorderSizePixel=0,Parent=sidebar})
     local sbGrad=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(24,24,30)),ColorSequenceKeypoint.new(1,Color3.fromRGB(12,12,16))})
     make("UIGradient",{Color=sbGrad, Rotation=90, Parent=sidebar})
@@ -3675,8 +3675,8 @@ function Aurora:CreateWindow(cfg)
     local topTrans = self.Acrylic and 0.65 or 0.1
     local top=make("Frame",{Size=UDim2.new(1,0,0,s(50)),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,Parent=content})
     make("UICorner",{CornerRadius=sz(20),Parent=top})
-    make("Frame",{Size=UDim2.new(1,0,0,s(20)),Position=UDim2.new(0,0,1,-s(20)),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
-    make("Frame",{Size=UDim2.new(0,s(20),1,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
+    make("Frame",{Name="CornerPatch",Size=UDim2.new(1,0,0,s(20)),Position=UDim2.new(0,0,1,-s(20)),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
+    make("Frame",{Name="CornerPatch",Size=UDim2.new(0,s(20),1,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
     make("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=0.9,BorderSizePixel=0,Parent=top})
     local tabHold=make("Frame",{Size=UDim2.new(1,-s(12),1,-s(66)),Position=UDim2.new(0,0,0,s(50)),BackgroundTransparency=1,Parent=content})
 
@@ -3986,14 +3986,26 @@ function Aurora:CreateWindow(cfg)
             
             local sidebar = self.MainFrame:FindFirstChild("Sidebar")
             if sidebar then
-                tw(sidebar, { BackgroundTransparency = math.clamp(transparency + 0.15, 0, 0.95) }, 0.15)
+                local st = math.clamp(transparency + 0.15, 0, 0.95)
+                tw(sidebar, { BackgroundTransparency = st }, 0.15)
+                for _, child in ipairs(sidebar:GetChildren()) do
+                    if child.Name == "CornerPatch" then
+                        tw(child, { BackgroundTransparency = st }, 0.15)
+                    end
+                end
             end
             
             local content = self.MainFrame:FindFirstChild("Content")
             if content then
                 local top = content:FindFirstChild("Top")
                 if top then
-                    tw(top, { BackgroundTransparency = math.clamp(transparency + 0.20, 0, 0.95) }, 0.15)
+                    local tt = math.clamp(transparency + 0.20, 0, 0.95)
+                    tw(top, { BackgroundTransparency = tt }, 0.15)
+                    for _, child in ipairs(top:GetChildren()) do
+                        if child.Name == "CornerPatch" then
+                            tw(child, { BackgroundTransparency = tt }, 0.15)
+                        end
+                    end
                 end
             end
         end
