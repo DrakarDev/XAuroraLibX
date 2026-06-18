@@ -3673,6 +3673,9 @@ function Aurora:CreateWindow(cfg)
     local content=make("Frame",{Size=UDim2.new(1,-s(192),1,0),Position=UDim2.new(0,s(192),0,0),BackgroundTransparency=1,Parent=main})
     local topTrans = self.Acrylic and 0.65 or 0.1
     local top=make("Frame",{Size=UDim2.new(1,0,0,s(50)),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,Parent=content})
+    make("UICorner",{CornerRadius=sz(20),Parent=top})
+    make("Frame",{Size=UDim2.new(1,0,0,s(20)),Position=UDim2.new(0,0,1,-s(20)),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
+    make("Frame",{Size=UDim2.new(0,s(20),1,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
     make("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=0.9,BorderSizePixel=0,Parent=top})
     local tabHold=make("Frame",{Size=UDim2.new(1,0,1,-s(50)),Position=UDim2.new(0,0,0,s(50)),BackgroundTransparency=1,Parent=content})
 
