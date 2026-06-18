@@ -15,18 +15,7 @@
 ================================================================================
 ]]
 
--- NOTE FOR LOCAL TESTING:
--- Attempts to load the local updated library file from the workspace folder first.
--- Falls back to GitHub if the local file is not present.
-local Aurora
-local ok, res = pcall(function()
-    return loadstring(readfile("AuroraLibraryReal.lua"))()
-end)
-if ok and type(res) == "table" then
-    Aurora = res
-else
-    Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"))()
-end
+local Aurora = loadstring(game:HttpGet("https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"))()
 
 -- 1. KEY SYSTEM VERIFICATION (NEW FEATURE)
 -- Block script load until the user enters a valid license key
