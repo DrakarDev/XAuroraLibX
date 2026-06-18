@@ -3560,7 +3560,7 @@ function Aurora:CreateWindow(cfg)
     local gui=make("ScreenGui",{Name="AuroraLib",ResetOnSpawn=false,DisplayOrder=9998,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
     safeParent(gui)
 
-    local main=make("Frame",{
+    local main=make("CanvasGroup",{
         Size=cfg.Size or ss(720,530),
         AnchorPoint=Vector2.new(0.5,0.5), Position=UDim2.new(0.5,0,0.5,0),
         BackgroundColor3=thm.Background,
