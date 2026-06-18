@@ -3677,7 +3677,7 @@ function Aurora:CreateWindow(cfg)
     make("Frame",{Size=UDim2.new(1,0,0,s(20)),Position=UDim2.new(0,0,1,-s(20)),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
     make("Frame",{Size=UDim2.new(0,s(20),1,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,BorderSizePixel=0,Parent=top})
     make("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=0.9,BorderSizePixel=0,Parent=top})
-    local tabHold=make("Frame",{Size=UDim2.new(1,0,1,-s(50)),Position=UDim2.new(0,0,0,s(50)),BackgroundTransparency=1,Parent=content})
+    local tabHold=make("Frame",{Size=UDim2.new(1,-s(12),1,-s(66)),Position=UDim2.new(0,0,0,s(50)),BackgroundTransparency=1,Parent=content})
 
     -- Window controls
     local function makeCtrlBtn(order, hoverBG)
