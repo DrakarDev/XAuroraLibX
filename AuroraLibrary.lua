@@ -3608,11 +3608,12 @@ function Aurora:CreateWindow(cfg)
     -- Sidebar (Apple-style: cleaner, more rounded inner elements)
     local sidebarTrans = self.Acrylic and 0.6 or 0.08
     local sidebar=make("Frame",{Size=UDim2.new(0,s(192),1,0),BackgroundColor3=thm.Sidebar,BackgroundTransparency=sidebarTrans,Parent=main})
+    make("UICorner",{CornerRadius=sz(20),Parent=sidebar})
+    local sbPatch=make("Frame",{Size=UDim2.new(0,s(20),1,0),Position=UDim2.new(1,-s(20),0,0),BackgroundColor3=thm.Sidebar,BackgroundTransparency=sidebarTrans,BorderSizePixel=0,Parent=sidebar})
     make("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,0,0,0),BackgroundColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=0.88,BorderSizePixel=0,Parent=sidebar})
-    make("UIGradient",{
-        Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(24,24,30)),ColorSequenceKeypoint.new(1,Color3.fromRGB(12,12,16))}),
-        Rotation=90, Parent=sidebar,
-    })
+    local sbGrad=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(24,24,30)),ColorSequenceKeypoint.new(1,Color3.fromRGB(12,12,16))})
+    make("UIGradient",{Color=sbGrad, Rotation=90, Parent=sidebar})
+    make("UIGradient",{Color=sbGrad, Rotation=90, Parent=sbPatch})
 
     -- Logo / header area
     local logoFrame=make("Frame",{Size=UDim2.new(1,0,0,s(56)),BackgroundTransparency=1,Parent=sidebar})
