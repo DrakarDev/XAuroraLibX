@@ -1,4 +1,4 @@
---[[
+﻿--[[
 ================================================================================
     AuroraLib v4.0
     Premium Roblox UI Library
@@ -5279,6 +5279,13 @@ function Section:AddChangelog(id, data)
                 make("UICorner", { CornerRadius = sz(8), Parent = row })
                 make("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.95, Thickness = 1, Parent = row })
                 make("UIPadding", { PaddingTop = sz(12), PaddingBottom = sz(12), PaddingLeft = sz(12), PaddingRight = sz(12), Parent = row })
+                make("UIListLayout", {
+                    FillDirection = Enum.FillDirection.Horizontal,
+                    SortOrder = Enum.SortOrder.LayoutOrder,
+                    VerticalAlignment = Enum.VerticalAlignment.Center,
+                    Padding = sz(12),
+                    Parent = row
+                })
                 
                 local typeStr = change.Type or "Note"
                 local cfg = typeConfig[typeStr] or { Color = Color3.fromRGB(149, 165, 166), Icon = "solar/document-bold" }
@@ -5288,19 +5295,27 @@ function Section:AddChangelog(id, data)
                     Size = UDim2.new(0, s(32), 0, s(32)),
                     BackgroundColor3 = cfg.Color,
                     BackgroundTransparency = 0.85,
+                    LayoutOrder = 1,
                     Parent = row
                 })
                 make("UICorner", { CornerRadius = sz(8), Parent = iconBox })
                 make("UIStroke", { Color = cfg.Color, Transparency = 0.4, Thickness = 1, Parent = iconBox })
                 
-                Aurora.Icons.GetIcon(cfg.Icon, iconBox, cfg.Color, sz(18))
+                local img = make("ImageLabel", {
+                    Size = ss(18, 18),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    Position = UDim2.fromScale(0.5, 0.5),
+                    BackgroundTransparency = 1,
+                    Parent = iconBox
+                })
+                applyIcon(img, cfg.Icon, cfg.Color)
 
                 -- Text Container
                 local textContainer = make("Frame", {
-                    Position = UDim2.new(0, s(44), 0, 0),
                     Size = UDim2.new(1, -s(44), 0, 0),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
+                    LayoutOrder = 2,
                     Parent = row
                 })
                 make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(2), Parent = textContainer })
