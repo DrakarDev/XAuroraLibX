@@ -5282,7 +5282,7 @@ function Section:AddChangelog(id, data)
                 make("UIListLayout", {
                     FillDirection = Enum.FillDirection.Horizontal,
                     SortOrder = Enum.SortOrder.LayoutOrder,
-                    VerticalAlignment = Enum.VerticalAlignment.Center,
+                    VerticalAlignment = Enum.VerticalAlignment.Top,
                     Padding = sz(12),
                     Parent = row
                 })
@@ -5331,6 +5331,7 @@ function Section:AddChangelog(id, data)
                     TextSize = fs(14),
                     Font = Enum.Font.GothamBold,
                     TextXAlignment = Enum.TextXAlignment.Left,
+                    RichText = true,
                     Parent = textContainer
                 })
 
@@ -5341,9 +5342,11 @@ function Section:AddChangelog(id, data)
                     Text = descStr,
                     TextColor3 = Color3.fromRGB(160, 160, 160),
                     TextSize = fs(12),
-                    Font = Enum.Font.Gotham,
+                    Font = Enum.Font.GothamMedium,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     TextWrapped = true,
+                    RichText = true,
+                    LineHeight = 1.1,
                     Parent = textContainer
                 })
             end
