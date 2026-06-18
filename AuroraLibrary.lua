@@ -5154,6 +5154,148 @@ function Section:AddLabel(id, text)
     return obj
 end
 
+-- ================================================================================
+function Section:AddChangelog(id, data)
+    local thm = Aurora.Theme
+    local obj = { Type="Changelog", Value=data, id=id }
+
+    local f = elemFrame(self.Container)
+    f.BackgroundTransparency = 0.8
+    make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(12), Parent = f })
+    
+    local badgeColors = {
+        Added    = Color3.fromRGB(46, 204, 113),
+        Añadido  = Color3.fromRGB(46, 204, 113),
+        Fixed    = Color3.fromRGB(231, 76, 60),
+        BugFix   = Color3.fromRGB(231, 76, 60),
+        Arreglo  = Color3.fromRGB(231, 76, 60),
+        Improved = Color3.fromRGB(52, 152, 219),
+        Mejora   = Color3.fromRGB(52, 152, 219),
+        Removed  = Color3.fromRGB(230, 126, 34)
+    }
+
+    local numVersions = #data
+    for i, ver in ipairs(data) do
+        local verFrame = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Parent = f
+        })
+        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(8), Parent = verFrame })
+
+        local header = make("Frame", {
+            Size = UDim2.new(1, 0, 0, s(16)),
+            BackgroundTransparency = 1,
+            Parent = verFrame
+        })
+        
+        make("TextLabel", {
+            Size = UDim2.new(0.5, 0, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            Text = ver.Version or "v1.0",
+            TextColor3 = thm.Text,
+            TextSize = fs(14),
+            Font = Enum.Font.GothamBold,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = header
+        })
+        
+        if ver.Date then
+            make("TextLabel", {
+                Size = UDim2.new(0.5, 0, 1, 0),
+                Position = UDim2.new(0.5, 0, 0, 0),
+                BackgroundTransparency = 1,
+                Text = ver.Date,
+                TextColor3 = thm.TextDark,
+                TextSize = fs(11),
+                Font = Enum.Font.Gotham,
+                TextXAlignment = Enum.TextXAlignment.Right,
+                Parent = header
+            })
+        end
+
+        local changesFrame = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Parent = verFrame
+        })
+        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(6), Parent = changesFrame })
+
+        if ver.Changes then
+            for _, change in ipairs(ver.Changes) do
+                local row = make("Frame", {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundTransparency = 1,
+                    Parent = changesFrame
+                })
+                make("UIListLayout", {
+                    SortOrder = Enum.SortOrder.LayoutOrder, 
+                    FillDirection = Enum.FillDirection.Horizontal, 
+                    Padding = sz(8), 
+                    VerticalAlignment = Enum.VerticalAlignment.Center,
+                    Parent = row 
+                })
+
+                local typeStr = change.Type or "Note"
+                local badgeColor = badgeColors[typeStr] or Color3.fromRGB(149, 165, 166)
+
+                local badge = make("Frame", {
+                    AutomaticSize = Enum.AutomaticSize.XY,
+                    BackgroundColor3 = badgeColor,
+                    Parent = row
+                })
+                make("UICorner", { CornerRadius = sz(4), Parent = badge })
+                make("UIPadding", {
+                    PaddingTop = sz(2), PaddingBottom = sz(2),
+                    PaddingLeft = sz(6), PaddingRight = sz(6),
+                    Parent = badge
+                })
+
+                make("TextLabel", {
+                    AutomaticSize = Enum.AutomaticSize.XY,
+                    BackgroundTransparency = 1,
+                    Text = typeStr:upper(),
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = fs(10),
+                    Font = Enum.Font.GothamBold,
+                    Parent = badge
+                })
+
+                make("TextLabel", {
+                    Size = UDim2.new(1, -s(60), 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundTransparency = 1,
+                    Text = change.Text or "",
+                    TextColor3 = thm.TextDark,
+                    TextSize = fs(12),
+                    Font = Enum.Font.Gotham,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextWrapped = true,
+                    RichText = true,
+                    Parent = row
+                })
+            end
+        end
+
+        if i < numVersions then
+            make("Frame", {
+                Size = UDim2.new(1, 0, 0, 1),
+                BackgroundColor3 = thm.Border,
+                BackgroundTransparency = 0.5,
+                BorderSizePixel = 0,
+                Parent = verFrame
+            })
+        end
+    end
+
+    addVisibilityAPI(obj, f)
+    Aurora.Options[id] = obj
+    return obj
+end
 function Section:AddLiveStat(id, cfg)
     local thm = Aurora.Theme
     cfg = cfg or {}
