@@ -5160,59 +5160,103 @@ function Section:AddChangelog(id, data)
     local obj = { Type="Changelog", Value=data, id=id }
 
     local f = elemFrame(self.Container)
-    f.BackgroundTransparency = 0.8
-    make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(12), Parent = f })
+    f.BackgroundTransparency = 1
+    make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(16), Parent = f })
     
-    local badgeColors = {
-        ["Added"]    = Color3.fromRGB(46, 204, 113),
-        ["Añadido"]  = Color3.fromRGB(46, 204, 113),
-        ["Fixed"]    = Color3.fromRGB(231, 76, 60),
-        ["BugFix"]   = Color3.fromRGB(231, 76, 60),
-        ["Arreglo"]  = Color3.fromRGB(231, 76, 60),
-        ["Improved"] = Color3.fromRGB(52, 152, 219),
-        ["Mejora"]   = Color3.fromRGB(52, 152, 219),
-        ["Removed"]  = Color3.fromRGB(230, 126, 34)
+    local typeConfig = {
+        ["Added"]       = { Color = Color3.fromRGB(85, 126, 237), Icon = "solar/leaf-bold" },
+        ["Añadido"]     = { Color = Color3.fromRGB(85, 126, 237), Icon = "solar/leaf-bold" },
+        ["Fixed"]       = { Color = Color3.fromRGB(235, 87, 87), Icon = "solar/bug-bold" },
+        ["BugFix"]      = { Color = Color3.fromRGB(235, 87, 87), Icon = "solar/bug-bold" },
+        ["Arreglo"]     = { Color = Color3.fromRGB(235, 87, 87), Icon = "solar/bug-bold" },
+        ["Improved"]    = { Color = Color3.fromRGB(242, 201, 76), Icon = "solar/star-bold" },
+        ["Improvement"] = { Color = Color3.fromRGB(242, 201, 76), Icon = "solar/star-bold" },
+        ["Mejora"]      = { Color = Color3.fromRGB(242, 201, 76), Icon = "solar/star-bold" },
+        ["Removed"]     = { Color = Color3.fromRGB(230, 126, 34), Icon = "solar/trash-bin-trash-bold" }
     }
 
-    local numVersions = #data
     for i, ver in ipairs(data) do
         local verFrame = make("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
+            BackgroundColor3 = Color3.fromRGB(15, 15, 20),
             Parent = f
         })
-        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(8), Parent = verFrame })
+        make("UICorner", { CornerRadius = sz(8), Parent = verFrame })
+        make("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9, Thickness = 1, Parent = verFrame })
+        
+        local layout = make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(12), Parent = verFrame })
+        make("UIPadding", { PaddingTop = sz(16), PaddingBottom = sz(16), PaddingLeft = sz(16), PaddingRight = sz(16), Parent = verFrame })
 
+        -- Header Container
         local header = make("Frame", {
-            Size = UDim2.new(1, 0, 0, s(16)),
+            Size = UDim2.new(1, 0, 0, s(50)),
             BackgroundTransparency = 1,
             Parent = verFrame
         })
         
-        make("TextLabel", {
-            Size = UDim2.new(0.5, 0, 1, 0),
-            Position = UDim2.new(0, 0, 0, 0),
+        -- Left side header (Texts)
+        local leftHeader = make("Frame", {
+            Size = UDim2.new(1, -s(100), 1, 0),
             BackgroundTransparency = 1,
-            Text = ver.Version or "v1.0",
-            TextColor3 = thm.Text,
-            TextSize = fs(14),
-            Font = Enum.Font.GothamBold,
-            TextXAlignment = Enum.TextXAlignment.Left,
             Parent = header
         })
+        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(2), Parent = leftHeader })
         
-        if ver.Date then
-            make("TextLabel", {
-                Size = UDim2.new(0.5, 0, 1, 0),
-                Position = UDim2.new(0.5, 0, 0, 0),
-                BackgroundTransparency = 1,
-                Text = ver.Date,
-                TextColor3 = thm.TextDark,
-                TextSize = fs(11),
-                Font = Enum.Font.Gotham,
-                TextXAlignment = Enum.TextXAlignment.Right,
+        make("TextLabel", {
+            Size = UDim2.new(1, 0, 0, s(12)),
+            BackgroundTransparency = 1,
+            Text = "CHANGELOG",
+            TextColor3 = Color3.fromRGB(85, 126, 237),
+            TextSize = fs(11),
+            Font = Enum.Font.GothamBold,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = leftHeader
+        })
+        
+        make("TextLabel", {
+            Size = UDim2.new(1, 0, 0, s(20)),
+            BackgroundTransparency = 1,
+            Text = "Update " .. (ver.Date or "Unknown"),
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = fs(18),
+            Font = Enum.Font.GothamBold,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = leftHeader
+        })
+        
+        make("TextLabel", {
+            Size = UDim2.new(1, 0, 0, s(14)),
+            BackgroundTransparency = 1,
+            Text = ver.Version .. " Release",
+            TextColor3 = Color3.fromRGB(150, 150, 150),
+            TextSize = fs(12),
+            Font = Enum.Font.Gotham,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = leftHeader
+        })
+        
+        -- Right side header (Changes count badge)
+        if ver.Changes then
+            local rightBadge = make("Frame", {
+                AnchorPoint = Vector2.new(1, 0),
+                Position = UDim2.new(1, 0, 0, s(8)),
+                AutomaticSize = Enum.AutomaticSize.XY,
+                BackgroundColor3 = Color3.fromRGB(30, 40, 60),
                 Parent = header
+            })
+            make("UICorner", { CornerRadius = sz(6), Parent = rightBadge })
+            make("UIStroke", { Color = Color3.fromRGB(85, 126, 237), Transparency = 0.5, Thickness = 1, Parent = rightBadge })
+            make("UIPadding", { PaddingTop = sz(6), PaddingBottom = sz(6), PaddingLeft = sz(12), PaddingRight = sz(12), Parent = rightBadge })
+            
+            make("TextLabel", {
+                AutomaticSize = Enum.AutomaticSize.XY,
+                BackgroundTransparency = 1,
+                Text = tostring(#ver.Changes) .. " CHANGES",
+                TextColor3 = Color3.fromRGB(220, 220, 220),
+                TextSize = fs(11),
+                Font = Enum.Font.GothamBold,
+                Parent = rightBadge
             })
         end
 
@@ -5222,73 +5266,72 @@ function Section:AddChangelog(id, data)
             BackgroundTransparency = 1,
             Parent = verFrame
         })
-        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(6), Parent = changesFrame })
+        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(8), Parent = changesFrame })
 
         if ver.Changes then
             for _, change in ipairs(ver.Changes) do
                 local row = make("Frame", {
                     Size = UDim2.new(1, 0, 0, 0),
                     AutomaticSize = Enum.AutomaticSize.Y,
-                    BackgroundTransparency = 1,
+                    BackgroundColor3 = Color3.fromRGB(22, 22, 28),
                     Parent = changesFrame
                 })
-                make("UIListLayout", {
-                    SortOrder = Enum.SortOrder.LayoutOrder, 
-                    FillDirection = Enum.FillDirection.Horizontal, 
-                    Padding = sz(8), 
-                    VerticalAlignment = Enum.VerticalAlignment.Center,
-                    Parent = row 
-                })
-
+                make("UICorner", { CornerRadius = sz(8), Parent = row })
+                make("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.95, Thickness = 1, Parent = row })
+                make("UIPadding", { PaddingTop = sz(12), PaddingBottom = sz(12), PaddingLeft = sz(12), PaddingRight = sz(12), Parent = row })
+                
                 local typeStr = change.Type or "Note"
-                local badgeColor = badgeColors[typeStr] or Color3.fromRGB(149, 165, 166)
+                local cfg = typeConfig[typeStr] or { Color = Color3.fromRGB(149, 165, 166), Icon = "solar/document-bold" }
 
-                local badge = make("Frame", {
-                    AutomaticSize = Enum.AutomaticSize.XY,
-                    BackgroundColor3 = badgeColor,
+                -- Icon Container
+                local iconBox = make("Frame", {
+                    Size = UDim2.new(0, s(32), 0, s(32)),
+                    BackgroundColor3 = cfg.Color,
+                    BackgroundTransparency = 0.85,
                     Parent = row
                 })
-                make("UICorner", { CornerRadius = sz(4), Parent = badge })
-                make("UIPadding", {
-                    PaddingTop = sz(2), PaddingBottom = sz(2),
-                    PaddingLeft = sz(6), PaddingRight = sz(6),
-                    Parent = badge
-                })
+                make("UICorner", { CornerRadius = sz(8), Parent = iconBox })
+                make("UIStroke", { Color = cfg.Color, Transparency = 0.4, Thickness = 1, Parent = iconBox })
+                
+                Aurora.Icons.GetIcon(cfg.Icon, iconBox, cfg.Color, sz(18))
 
-                make("TextLabel", {
-                    AutomaticSize = Enum.AutomaticSize.XY,
-                    BackgroundTransparency = 1,
-                    Text = typeStr:upper(),
-                    TextColor3 = Color3.fromRGB(255, 255, 255),
-                    TextSize = fs(10),
-                    Font = Enum.Font.GothamBold,
-                    Parent = badge
-                })
-
-                make("TextLabel", {
-                    Size = UDim2.new(1, -s(60), 0, 0),
+                -- Text Container
+                local textContainer = make("Frame", {
+                    Position = UDim2.new(0, s(44), 0, 0),
+                    Size = UDim2.new(1, -s(44), 0, 0),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
-                    Text = change.Text or "",
-                    TextColor3 = thm.TextDark,
+                    Parent = row
+                })
+                make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(2), Parent = textContainer })
+
+                local titleStr = change.Title or typeStr
+                local descStr = change.Text or ""
+
+                make("TextLabel", {
+                    Size = UDim2.new(1, 0, 0, s(16)),
+                    BackgroundTransparency = 1,
+                    Text = titleStr,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = fs(14),
+                    Font = Enum.Font.GothamBold,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = textContainer
+                })
+
+                make("TextLabel", {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundTransparency = 1,
+                    Text = descStr,
+                    TextColor3 = Color3.fromRGB(160, 160, 160),
                     TextSize = fs(12),
                     Font = Enum.Font.Gotham,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     TextWrapped = true,
-                    RichText = true,
-                    Parent = row
+                    Parent = textContainer
                 })
             end
-        end
-
-        if i < numVersions then
-            make("Frame", {
-                Size = UDim2.new(1, 0, 0, 1),
-                BackgroundColor3 = thm.Border,
-                BackgroundTransparency = 0.5,
-                BorderSizePixel = 0,
-                Parent = verFrame
-            })
         end
     end
 
