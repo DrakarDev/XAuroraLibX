@@ -1,4 +1,4 @@
---[[
+﻿--[[
 ================================================================================
     AuroraLib v4.0
     Premium Roblox UI Library
@@ -197,7 +197,7 @@ local function _initTooltip()
         Visible = false,
         Parent = _tooltipGui
     })
-    make("UICorner", { CornerRadius = sz(5), Parent = _tooltipFrame })
+    make("UICorner", { CornerRadius = sz(9), Parent = _tooltipFrame })
     _tooltipStroke = make("UIStroke", { Color = Aurora.Themes.Dark.Border, Thickness = 1, Parent = _tooltipFrame })
     make("UIPadding", { PaddingTop = sz(4), PaddingBottom = sz(4), PaddingLeft = sz(8), PaddingRight = sz(8), Parent = _tooltipFrame })
     
@@ -1163,7 +1163,7 @@ function Aurora:Notify(cfg)
     end
 
     local card = make("Frame", {
-        Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+        Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundColor3=thm.NotifBG,
         BackgroundTransparency=(acrylicEnabled and 0.45 or 0),
         BorderSizePixel=0, ClipsDescendants=true,
@@ -1172,7 +1172,7 @@ function Aurora:Notify(cfg)
     if acrylicEnabled then
         createAcrylic(card)
     end
-    make("UICorner", { CornerRadius=sz(12), Parent=card })
+    make("UICorner", { CornerRadius=sz(14), Parent=card })
     
     local cardStroke = make("UIStroke", { Thickness=1, Transparency=0.25, Parent=card })
     local gradient = make("UIGradient", {
@@ -1222,16 +1222,16 @@ function Aurora:Notify(cfg)
     make("UIListLayout", { SortOrder=Enum.SortOrder.LayoutOrder, Padding=sz(2), Parent=txtF })
     
     local titleLbl = make("TextLabel", {
-        Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+        Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundTransparency=1, Text=cfg.Title or "Notification",
-        TextColor3=thm.Text, TextSize=fs(12), Font=Enum.Font.GothamBold,
+        TextColor3=thm.Text, TextSize=fs(16), Font=Enum.Font.GothamBold,
         TextXAlignment=Enum.TextXAlignment.Left, TextWrapped=true, RichText=true, Parent=txtF,
     })
     
     local contentLbl = make("TextLabel", {
-        Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+        Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundTransparency=1, Text=cfg.Content or "",
-        TextColor3=thm.SubText, TextSize=fs(11), Font=Enum.Font.Gotham,
+        TextColor3=thm.SubText, TextSize=fs(16), Font=Enum.Font.Gotham,
         TextXAlignment=Enum.TextXAlignment.Left, TextWrapped=true, RichText=true, Parent=txtF,
         Visible = (cfg.Content ~= nil and cfg.Content ~= "")
     })
@@ -1288,7 +1288,7 @@ function Aurora:Notify(cfg)
         Parent = txtF,
         Visible = false
     })
-    make("UICorner", { CornerRadius = sz(5), Parent = inputFrame })
+    make("UICorner", { CornerRadius = sz(9), Parent = inputFrame })
     local inputStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = inputFrame })
     
     local txtInput = make("TextBox", {
@@ -1385,7 +1385,7 @@ function Aurora:Notify(cfg)
                     Font = Enum.Font.GothamBold,
                     Parent = btnContainer
                 })
-                make("UICorner", { CornerRadius = sz(5), Parent = button })
+                make("UICorner", { CornerRadius = sz(9), Parent = button })
                 local bStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = button })
                 addHoverScale(button)
                 
@@ -1445,8 +1445,8 @@ function Aurora:Notify(cfg)
         }),
         Rotation=0, Parent=pFill,
     })
-    make("UICorner", { CornerRadius=sz(2), Parent=pTrack })
-    make("UICorner", { CornerRadius=sz(2), Parent=pFill })
+    make("UICorner", { CornerRadius=sz(4), Parent=pTrack })
+    make("UICorner", { CornerRadius=sz(4), Parent=pFill })
 
     local notifObj = { Card = card, Close = closeNotif }
     table.insert(_activeNotifs, notifObj)
@@ -1665,11 +1665,11 @@ local function elemFrame(parent)
     end
 
     local f = make(Aurora.FadeIn and "CanvasGroup" or "Frame", {
-        Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+        Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundColor3=Aurora.Theme.Element, BackgroundTransparency=1, BorderSizePixel=0, Parent=parent,
     })
-    make("UICorner", { CornerRadius=sz(8), Parent=f })
-    make("UIPadding", { PaddingTop=sz(8), PaddingBottom=sz(8), PaddingLeft=sz(10), PaddingRight=sz(10), Parent=f })
+    make("UICorner", { CornerRadius=sz(12), Parent=f })
+    make("UIPadding", { PaddingTop=sz(9), PaddingBottom=sz(9), PaddingLeft=sz(11), PaddingRight=sz(11), Parent=f })
     make("UIListLayout", { SortOrder=Enum.SortOrder.LayoutOrder, Padding=sz(6), Parent=f })
     reg(f, "BackgroundColor3", "Element")
     
@@ -1724,10 +1724,10 @@ local function createColorpickerPanel(parentFrame, cpObj, cpCfg, colDisp)
         BorderSizePixel = 0,
         Parent = mainRow,
     })
-    make("UICorner", { CornerRadius=sz(4), Parent=canvasHolder })
+    make("UICorner", { CornerRadius=sz(7), Parent=canvasHolder })
 
     local satGrad = make("Frame", { Size=UDim2.fromScale(1,1), BackgroundColor3=Color3.fromRGB(255,255,255), BorderSizePixel=0, Parent=canvasHolder })
-    make("UICorner", { CornerRadius=sz(4), Parent=satGrad })
+    make("UICorner", { CornerRadius=sz(7), Parent=satGrad })
     make("UIGradient", {
         Color=ColorSequence.new(Color3.fromRGB(255,255,255), Color3.fromRGB(255,255,255)),
         Transparency=NumberSequence.new({ NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(1,1) }),
@@ -1735,7 +1735,7 @@ local function createColorpickerPanel(parentFrame, cpObj, cpCfg, colDisp)
     })
 
     local valGrad = make("Frame", { Size=UDim2.fromScale(1,1), BackgroundColor3=Color3.fromRGB(0,0,0), BorderSizePixel=0, Parent=canvasHolder })
-    make("UICorner", { CornerRadius=sz(4), Parent=valGrad })
+    make("UICorner", { CornerRadius=sz(7), Parent=valGrad })
     make("UIGradient", {
         Color=ColorSequence.new(Color3.fromRGB(0,0,0), Color3.fromRGB(0,0,0)),
         Transparency=NumberSequence.new({ NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(1,0) }),
@@ -1763,7 +1763,7 @@ local function createColorpickerPanel(parentFrame, cpObj, cpCfg, colDisp)
         Text="", AutoButtonColor=false, Active=true,
         Parent = mainRow,
     })
-    make("UICorner", { CornerRadius=sz(3), Parent=hueBar })
+    make("UICorner", { CornerRadius=sz(5), Parent=hueBar })
     make("UIGradient", {
         Color=ColorSequence.new({
             ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255,  0,  0)),
@@ -1813,7 +1813,7 @@ local function createColorpickerPanel(parentFrame, cpObj, cpCfg, colDisp)
             ClearTextOnFocus=false,
             Parent=row,
         })
-        make("UICorner", { CornerRadius=sz(3), Parent=box })
+        make("UICorner", { CornerRadius=sz(6), Parent=box })
         make("UIStroke", { Color=thm.Border, Thickness=1, Parent=box })
         make("TextLabel", {
             Size=UDim2.new(0.40, 0, 1, 0),
@@ -1843,14 +1843,14 @@ local function createColorpickerPanel(parentFrame, cpObj, cpCfg, colDisp)
     local oldSwatch = make("Frame", {
         Size=UDim2.new(0.5,-s(2),1,0), BackgroundColor3=originalColor, BorderSizePixel=0, Parent=swatchRow,
     })
-    make("UICorner", { CornerRadius=sz(3), Parent=oldSwatch })
+    make("UICorner", { CornerRadius=sz(6), Parent=oldSwatch })
     make("UIStroke", { Color=thm.Border, Thickness=1, Parent=oldSwatch })
 
     local newSwatch = make("Frame", {
         Size=UDim2.new(0.5,-s(2),1,0), Position=UDim2.new(0.5,s(2),0,0),
         BackgroundColor3=cpObj.Value, BorderSizePixel=0, Parent=swatchRow,
     })
-    make("UICorner", { CornerRadius=sz(3), Parent=newSwatch })
+    make("UICorner", { CornerRadius=sz(6), Parent=newSwatch })
     make("UIStroke", { Color=thm.Border, Thickness=1, Parent=newSwatch })
 
     -- Update helpers
@@ -2127,7 +2127,7 @@ function Section:AddToggle(id, cfg)
     local f = elemFrame(self.Container)
     addTooltip(f, cfg.Tooltip)
 
-    local topF = make("Frame", { Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1, LayoutOrder=1, Parent=f })
+    local topF = make("Frame", { Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1, LayoutOrder=1, Parent=f })
     local txtF = make("Frame", { Size=UDim2.new(1,-s(130),0,0), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1, Parent=topF })
     make("UIListLayout", { SortOrder=Enum.SortOrder.LayoutOrder, Padding=sz(3), Parent=txtF })
 
@@ -2139,13 +2139,13 @@ function Section:AddToggle(id, cfg)
 
     make("TextLabel", {
         Size=UDim2.new(1,-tx,0,0), Position=UDim2.new(0,tx,0,0), AutomaticSize=Enum.AutomaticSize.Y,
-        BackgroundTransparency=1, Text=title, TextColor3=thm.Text, TextSize=fs(13),
+        BackgroundTransparency=1, Text=title, TextColor3=thm.Text, TextSize=fs(16),
         Font=Enum.Font.GothamBold, TextXAlignment=Enum.TextXAlignment.Left, TextWrapped=true, Parent=txtF,
     })
     if desc then
         make("TextLabel", {
             Size=UDim2.new(1,-tx,0,0), Position=UDim2.new(0,tx,0,0), AutomaticSize=Enum.AutomaticSize.Y,
-            BackgroundTransparency=1, Text=desc, TextColor3=thm.SubText, TextSize=fs(11),
+            BackgroundTransparency=1, Text=desc, TextColor3=thm.SubText, TextSize=fs(16),
             Font=Enum.Font.Gotham, TextXAlignment=Enum.TextXAlignment.Left, TextWrapped=true, Parent=txtF,
         })
     end
@@ -2162,8 +2162,8 @@ function Section:AddToggle(id, cfg)
     })
 
     -- Modern pill-style toggle switch
-    local pillW, pillH = s(34), s(18)
-    local knobSize = s(14)
+    local pillW, pillH = s(38), s(20)
+    local knobSize = s(16)
     local pill = make("TextButton", {
         Size=UDim2.fromOffset(pillW, pillH),
         BackgroundColor3=def and thm.ToggleOn or thm.ToggleOff,
@@ -2265,10 +2265,10 @@ function Section:AddToggle(id, cfg)
         local kbBtn = make("TextButton", {
             Size=ss(55,20), BackgroundColor3=thm.InputBG,
             Text=defaultKey==Enum.KeyCode.None and "None" or defaultKey.Name,
-            TextColor3=thm.SubText, TextSize=fs(11), Font=Enum.Font.GothamBold,
+            TextColor3=thm.SubText, TextSize=fs(16), Font=Enum.Font.GothamBold,
             LayoutOrder=5, ZIndex=10, Parent=rightControls,
         })
-        make("UICorner", { CornerRadius=sz(4), Parent=kbBtn })
+        make("UICorner", { CornerRadius=sz(8), Parent=kbBtn })
         local kbStroke = make("UIStroke", { Color=thm.Border, Thickness=1, Parent=kbBtn })
 
         local mobileBtn, mobileStroke, mobileLbl, mobileDot = _createMobileKeybind(kbCfg.Title or cfg.Title or title or "Toggle", function()
@@ -2397,7 +2397,7 @@ function Section:AddToggle(id, cfg)
             Size=ss(20,20), BackgroundColor3=cpObj.Value,
             LayoutOrder=1, ZIndex=10, Parent=rightControls,
         })
-        make("UICorner", { CornerRadius=sz(4), Parent=colDisp })
+        make("UICorner", { CornerRadius=sz(7), Parent=colDisp })
         make("UIStroke", { Color=thm.Border, Thickness=1, Parent=colDisp })
 
         local cpBtn = make("TextButton", {
@@ -2460,13 +2460,13 @@ function Section:AddSlider(id, cfg)
     make("TextLabel",{
         Size=UDim2.new(0.6,-tx,1,0),Position=UDim2.new(0,tx,0,0),
         BackgroundTransparency=1,Text=cfg.Title or "Slider",TextColor3=thm.Text,
-        TextSize=fs(13),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
     })
 
     local valBox=make("TextBox",{
         Size=ss(80,18),AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,0,0.5,0),
         BackgroundTransparency=1,Text=tostring(obj.Value)..(cfg.Suffix or ""),
-        TextColor3=thm.SubText,TextSize=fs(11),Font=Enum.Font.GothamBold,
+        TextColor3=thm.SubText,TextSize=fs(16),Font=Enum.Font.GothamBold,
         TextXAlignment=Enum.TextXAlignment.Right,ClearTextOnFocus=false,Parent=topF,
     })
 
@@ -2584,7 +2584,7 @@ function Section:AddAlert(cfg)
     local f=make(Aurora.FadeIn and "CanvasGroup" or "Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=self.Container})
     
     local bgFrame=make("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=thm.Element,Parent=f})
-    make("UICorner",{CornerRadius=sz(8),Parent=bgFrame})
+    make("UICorner",{CornerRadius=sz(11),Parent=bgFrame})
     make("UIStroke",{Color=col,Thickness=1,Transparency=0.55,Parent=bgFrame})
     
     make("UIPadding",{PaddingTop=sz(6),PaddingBottom=sz(6),PaddingLeft=sz(10),PaddingRight=sz(10),Parent=f})
@@ -2601,13 +2601,13 @@ function Section:AddAlert(cfg)
     make("TextLabel",{
         Size=UDim2.new(1,-s(20),1,0),Position=UDim2.new(0,s(20),0,0),
         BackgroundTransparency=1,Text=cfg.Title or "Alert",TextColor3=thm.Text,
-        TextSize=fs(12),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=header,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=header,
     })
     if cfg.Content and cfg.Content ~= "" then
         make("TextLabel",{
             Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,
             BackgroundTransparency=1,Text=cfg.Content,TextColor3=thm.SubText,
-            TextSize=fs(11),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=contentF,
+            TextSize=fs(16),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=contentF,
         })
     end
 
@@ -2650,14 +2650,14 @@ function Section:AddColorpicker(id, cfg)
     make("TextLabel",{
         Size=UDim2.new(0.6,-tx,1,0),Position=UDim2.new(0,tx,0,0),
         BackgroundTransparency=1,Text=cfg.Title or "Color",TextColor3=thm.Text,
-        TextSize=fs(13),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
     })
 
     local colDisp=make("Frame",{
         Size=ss(36,18),AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,0,0.5,0),
         BackgroundColor3=obj.Value,Parent=topF,
     })
-    make("UICorner",{CornerRadius=sz(6),Parent=colDisp})
+    make("UICorner",{CornerRadius=sz(8),Parent=colDisp})
     make("UIStroke",{Color=thm.Border,Thickness=1,Parent=colDisp})
 
     local cpPanel=createColorpickerPanel(f,obj,cfg,colDisp)
@@ -2730,7 +2730,7 @@ function Section:AddButton(cfg)
     local titleLbl = make("TextLabel",{
         Size=UDim2.new(1,-tx,0,0),Position=UDim2.new(0,tx,0,0),AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundTransparency=1,Text=cfg.Title or "Button",TextColor3=thm.Text,
-        TextSize=fs(13),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
     })
 
     local descLbl
@@ -2738,7 +2738,7 @@ function Section:AddButton(cfg)
         descLbl = make("TextLabel",{
             Size=UDim2.new(1,-tx,0,0),Position=UDim2.new(0,tx,0,0),AutomaticSize=Enum.AutomaticSize.Y,
             BackgroundTransparency=1,Text=cfg.Description or cfg.Desc,TextColor3=thm.SubText,
-            TextSize=fs(11),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
+            TextSize=fs(16),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
         })
     end
 
@@ -2776,7 +2776,7 @@ function Section:AddButton(cfg)
             descLbl = make("TextLabel",{
                 Size=UDim2.new(1,-tx,0,0),Position=UDim2.new(0,tx,0,0),AutomaticSize=Enum.AutomaticSize.Y,
                 BackgroundTransparency=1,Text=d,TextColor3=thm.SubText,
-                TextSize=fs(11),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
+                TextSize=fs(16),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
             })
         end
     end
@@ -2802,12 +2802,12 @@ function Section:AddParagraph(cfg)
     local titleLbl = make("TextLabel",{
         Size=UDim2.new(1,-tx,0,0),Position=UDim2.new(0,tx,0,0),AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundTransparency=1,Text=cfg.Title or "",TextColor3=thm.Text,
-        TextSize=fs(12),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
     })
     local contentLbl = make("TextLabel",{
         Size=UDim2.new(1,-tx,0,0),Position=UDim2.new(0,tx,0,0),AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundTransparency=1,Text=cfg.Content or "",TextColor3=thm.SubText,
-        TextSize=fs(11),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
+        TextSize=fs(16),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Parent=txtF,
     })
 
     local obj = {Type = "Paragraph"}
@@ -2842,15 +2842,15 @@ function Section:AddDropdown(id, cfg)
     make("TextLabel",{
         Size=UDim2.new(0.5,-tx,1,0),Position=UDim2.new(0,tx,0,0),
         BackgroundTransparency=1,Text=cfg.Title or "Dropdown",TextColor3=thm.Text,
-        TextSize=fs(13),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
     })
     local valBox=make("Frame",{Size=UDim2.new(0.5,0,1,0),AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,0,0,0),BackgroundColor3=thm.InputBG,Parent=topF})
     make("UISizeConstraint",{MaxSize=Vector2.new(s(200),math.huge),Parent=valBox})
-    make("UICorner",{CornerRadius=sz(6),Parent=valBox})
+    make("UICorner",{CornerRadius=sz(10),Parent=valBox})
     make("UIStroke",{Color=thm.Border,Thickness=1,Parent=valBox})
     local valTxt=make("TextLabel",{
         Size=UDim2.new(1,-s(22),1,0),Position=UDim2.new(0,s(8),0,0),
-        BackgroundTransparency=1,Text="",TextColor3=thm.SubText,TextSize=fs(11),
+        BackgroundTransparency=1,Text="",TextColor3=thm.SubText,TextSize=fs(16),
         Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=valBox,
     })
     local arr=make("ImageLabel",{Size=ss(12,12),AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,-s(4),0.5,0),BackgroundTransparency=1,Parent=valBox})
@@ -2883,9 +2883,9 @@ function Section:AddDropdown(id, cfg)
     local searchBox=make("TextBox",{
         Size=UDim2.new(1,0,0,s(24)),BackgroundColor3=thm.InputBG,
         PlaceholderText="Search...",PlaceholderColor3=thm.SubText,
-        Text="",TextColor3=thm.Text,TextSize=fs(11),Font=Enum.Font.Gotham,LayoutOrder=1,Parent=dropdownList,
+        Text="",TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.Gotham,LayoutOrder=1,Parent=dropdownList,
     })
-    make("UICorner",{CornerRadius=sz(5),Parent=searchBox})
+    make("UICorner",{CornerRadius=sz(9),Parent=searchBox})
     make("UIStroke",{Color=thm.Border,Thickness=1,Parent=searchBox})
     make("UIPadding",{PaddingLeft=sz(8),Parent=searchBox})
     local optionScroll=make("ScrollingFrame",{
@@ -2899,10 +2899,10 @@ function Section:AddDropdown(id, cfg)
     local function populateOptions(vals)
         for _,val in ipairs(vals) do
             local optBtn=make("TextButton",{Size=UDim2.new(1,0,0,s(30)),BackgroundColor3=thm.InputBG,BackgroundTransparency=1,Text="",Parent=optionScroll})
-            make("UICorner",{CornerRadius=sz(5),Parent=optBtn})
+            make("UICorner",{CornerRadius=sz(9),Parent=optBtn})
             local optLbl=make("TextLabel",{
                 Size=UDim2.new(1,-s(28),1,0),Position=UDim2.new(0,s(8),0,0),
-                BackgroundTransparency=1,Text=tostring(val),TextColor3=thm.SubText,TextSize=fs(11),
+                BackgroundTransparency=1,Text=tostring(val),TextColor3=thm.SubText,TextSize=fs(16),
                 Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=optBtn,
             })
             local optCheck=make("ImageLabel",{Size=ss(12,12),AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,-s(8),0.5,0),BackgroundTransparency=1,Visible=false,Parent=optBtn})
@@ -3076,16 +3076,16 @@ function Section:AddInput(id, cfg)
     make("TextLabel",{
         Size=UDim2.new(0.45,-tx,1,0),Position=UDim2.new(0,tx,0,0),
         BackgroundTransparency=1,Text=cfg.Title or "Input",TextColor3=thm.Text,
-        TextSize=fs(13),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
     })
     local inputValBox=make("TextBox",{
         Size=UDim2.new(0.55,0,0,s(22)),AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,0,0.5,0),
         BackgroundColor3=thm.InputBG,PlaceholderText=cfg.Placeholder or "Type here...",
-        PlaceholderColor3=thm.SubText,Text=obj.Value,TextColor3=thm.Text,TextSize=fs(11),
+        PlaceholderColor3=thm.SubText,Text=obj.Value,TextColor3=thm.Text,TextSize=fs(16),
         Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=topF,
     })
     make("UISizeConstraint",{MaxSize=Vector2.new(s(200),math.huge),Parent=inputValBox})
-    make("UICorner",{CornerRadius=sz(6),Parent=inputValBox})
+    make("UICorner",{CornerRadius=sz(10),Parent=inputValBox})
     make("UIStroke",{Color=thm.Border,Thickness=1,Parent=inputValBox})
     make("UIPadding",{PaddingLeft=sz(8),PaddingRight=sz(8),Parent=inputValBox})
     inputValBox.FocusLost:Connect(function() obj.Value=inputValBox.Text; if cfg.Callback then pcall(cfg.Callback,obj.Value) end; triggerAutosave() end)
@@ -3138,15 +3138,15 @@ function Section:AddKeybind(id, cfg)
     make("TextLabel",{
         Size=UDim2.new(0.6,-tx,1,0),Position=UDim2.new(0,tx,0,0),
         BackgroundTransparency=1,Text=cfg.Title or "Keybind",TextColor3=thm.Text,
-        TextSize=fs(13),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
+        TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=topF,
     })
     local kbBtn=make("TextButton",{
         Size=ss(65,20),AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,0,0.5,0),
         BackgroundColor3=thm.InputBG,
         Text=defaultKey==Enum.KeyCode.None and "None" or defaultKey.Name,
-        TextColor3=thm.SubText,TextSize=fs(11),Font=Enum.Font.GothamBold,ZIndex=10,Parent=topF,
+        TextColor3=thm.SubText,TextSize=fs(16),Font=Enum.Font.GothamBold,ZIndex=10,Parent=topF,
     })
-    make("UICorner",{CornerRadius=sz(5),Parent=kbBtn})
+    make("UICorner",{CornerRadius=sz(8),Parent=kbBtn})
     local kbStroke=make("UIStroke",{Color=thm.Border,Thickness=1,Parent=kbBtn})
 
     local mobileBtn, mobileStroke, mobileLbl, mobileDot = _createMobileKeybind(cfg.Title or "Keybind", function()
@@ -3453,22 +3453,30 @@ function Tab:AddSubTab(title)
     self.SubTabs=self.SubTabs or {}
     if not self.SubTabBar then
         self.DefaultScroll.Visible=false
-        self.SubTabBar=make("ScrollingFrame",{
-            Size=UDim2.new(1,0,0,s(36)),BackgroundColor3=Aurora.Theme.TopBar,BorderSizePixel=0,
-            ScrollBarThickness=0,CanvasSize=UDim2.new(0,0,0,0),ScrollingDirection=Enum.ScrollingDirection.X,
-            BackgroundTransparency=1,Parent=self.Page,
-        })
+        -- Apple-style pill bar background strip
         local bgBar = make("Frame",{
-            Size=UDim2.new(1,0,0,s(36)),BackgroundColor3=Aurora.Theme.TopBar,BorderSizePixel=0,ZIndex=0,Parent=self.Page
+            Size=UDim2.new(1,0,0,s(44)),BackgroundColor3=Aurora.Theme.TopBar,BorderSizePixel=0,ZIndex=0,Parent=self.Page
         })
-        make("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Aurora.Theme.Border,BorderSizePixel=0,Parent=bgBar})
-        
-        local slay=make("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(20),Parent=self.SubTabBar})
-        make("UIPadding",{PaddingLeft=sz(16),PaddingRight=sz(16),Parent=self.SubTabBar})
+        make("UIGradient",{
+            Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(18,18,24)),ColorSequenceKeypoint.new(1,Color3.fromRGB(12,12,16))}),
+            Rotation=90, Parent=bgBar,
+        })
+        make("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Aurora.Theme.Border,BackgroundTransparency=0.5,BorderSizePixel=0,Parent=bgBar})
+        -- Segmented pill track
+        self.SubTabBar=make("ScrollingFrame",{
+            Size=UDim2.new(1,-s(20),0,s(28)),Position=UDim2.new(0,s(10),0,s(8)),
+            BackgroundColor3=Aurora.Theme.Element,BackgroundTransparency=0.5,BorderSizePixel=0,
+            ScrollBarThickness=0,CanvasSize=UDim2.new(0,0,0,0),ScrollingDirection=Enum.ScrollingDirection.X,
+            ZIndex=1,Parent=self.Page,
+        })
+        make("UICorner",{CornerRadius=sz(8),Parent=self.SubTabBar})
+        make("UIStroke",{Color=Aurora.Theme.Border,Thickness=1,Transparency=0.45,Parent=self.SubTabBar})
+        local slay=make("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(2),Parent=self.SubTabBar})
+        make("UIPadding",{PaddingLeft=sz(3),PaddingRight=sz(3),PaddingTop=sz(3),PaddingBottom=sz(3),Parent=self.SubTabBar})
         slay.Changed:Connect(function()
-            self.SubTabBar.CanvasSize = UDim2.new(0, slay.AbsoluteContentSize.X + s(32), 0, 0)
+            self.SubTabBar.CanvasSize = UDim2.new(0, slay.AbsoluteContentSize.X + s(10), 0, 0)
         end)
-        self.SubPageContainer=make("Frame",{Size=UDim2.new(1,0,1,-s(36)),Position=UDim2.new(0,0,0,s(36)),BackgroundTransparency=1,Parent=self.Page})
+        self.SubPageContainer=make("Frame",{Size=UDim2.new(1,0,1,-s(44)),Position=UDim2.new(0,0,0,s(44)),BackgroundTransparency=1,Parent=self.Page})
     end
 
     local subPage=make("ScrollingFrame",{
@@ -3480,46 +3488,51 @@ function Tab:AddSubTab(title)
     make("UIPadding",{PaddingTop=sz(14),PaddingBottom=sz(20),PaddingLeft=sz(14),PaddingRight=sz(14),Parent=subContent})
     subLay.Changed:Connect(function() subPage.CanvasSize=UDim2.new(0,0,0,subLay.AbsoluteContentSize.Y+s(30)) end)
 
+    -- Apple pill button
     local subBtn=make("TextButton",{
-        Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,BackgroundTransparency=1,
-        Text=title,TextColor3=Aurora.Theme.TabInactive,TextSize=fs(12),Font=Enum.Font.GothamBold,Parent=self.SubTabBar,
+        Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
+        BackgroundColor3=Aurora.Theme.Accent,BackgroundTransparency=1,
+        Text=title,TextColor3=Aurora.Theme.TabInactive,TextSize=fs(16),Font=Enum.Font.GothamBold,
+        ZIndex=2,Parent=self.SubTabBar,
     })
+    make("UICorner",{CornerRadius=sz(6),Parent=subBtn})
+    make("UIPadding",{PaddingLeft=sz(10),PaddingRight=sz(10),Parent=subBtn})
+    -- Dummy underline for API compatibility
+    local underline=make("Frame",{Size=UDim2.new(0,0,0,0),BackgroundTransparency=1,Visible=false,Parent=subBtn})
+
+    local function setActive(isActive)
+        local currentThm = Aurora.Theme or Aurora.Themes.Dark
+        if isActive then
+            tw(subBtn, { BackgroundColor3 = currentThm.Accent, BackgroundTransparency = 0.82, TextColor3 = currentThm.Accent }, 0.18)
+        else
+            tw(subBtn, { BackgroundTransparency = 1, TextColor3 = currentThm.TabInactive }, 0.18)
+        end
+    end
+
     subBtn.MouseEnter:Connect(function()
-        if subBtn.TextColor3 ~= Aurora.Theme.TabActive then
-            tw(subBtn, { TextColor3 = Aurora.Theme.Text }, 0.15)
+        if not subPage.Visible then
+            local currentThm = Aurora.Theme or Aurora.Themes.Dark
+            tw(subBtn, { BackgroundColor3 = currentThm.ElementHover, BackgroundTransparency = 0.55, TextColor3 = currentThm.Text }, 0.12)
         end
     end)
     subBtn.MouseLeave:Connect(function()
-        if subBtn.TextColor3 ~= Aurora.Theme.TabActive then
-            tw(subBtn, { TextColor3 = Aurora.Theme.TabInactive }, 0.15)
-        end
+        if not subPage.Visible then setActive(false) end
     end)
-    local underline=make("Frame",{
-        Size=UDim2.new(1,0,0,s(2)),Position=UDim2.new(0,0,1,-s(2)),
-        BackgroundColor3=Aurora.Theme.Accent,BorderSizePixel=0,Visible=false,Parent=subBtn,
-    })
 
     local subTabObj=setmetatable({Button=subBtn,Page=subPage,ScrollContent=subContent,Underline=underline,_parentTab=self},SubTab)
     function subTabObj:Select()
+        local currentThm = Aurora.Theme or Aurora.Themes.Dark
         for _,other in ipairs(self._parentTab.SubTabs) do
             other.Page.Visible=false
-            tw(other.Underline, { Size = UDim2.new(0,0,0,s(2)), Position = UDim2.new(0.5,0,1,-s(2)) }, 0.15)
-            other.Button.TextColor3=Aurora.Theme.TabInactive
+            tw(other.Button, { BackgroundTransparency = 1, TextColor3 = currentThm.TabInactive }, 0.18)
         end
         subPage.Visible=true
-        underline.Visible=true
-        underline.Position = UDim2.new(0.5,0,1,-s(2))
-        underline.Size = UDim2.new(0,0,0,s(2))
-        tw(underline, { Size = UDim2.new(1,0,0,s(2)), Position = UDim2.new(0,0,1,-s(2)) }, 0.2)
-        subBtn.TextColor3=Aurora.Theme.TabActive
+        setActive(true)
     end
-    subBtn.MouseButton1Click:Connect(function()
-        subTabObj:Select()
-    end)
+    subBtn.MouseButton1Click:Connect(function() subTabObj:Select() end)
     if #self.SubTabs==0 then
-        subPage.Visible=true; underline.Visible=true; subBtn.TextColor3=Aurora.Theme.TabActive
-        underline.Position = UDim2.new(0,0,1,-s(2))
-        underline.Size = UDim2.new(1,0,0,s(2))
+        subPage.Visible=true
+        setActive(true)
     end
     table.insert(self.SubTabs,subTabObj)
     return subTabObj
@@ -3548,7 +3561,7 @@ function Aurora:CreateWindow(cfg)
     safeParent(gui)
 
     local main=make("Frame",{
-        Size=cfg.Size or ss(700,520),
+        Size=cfg.Size or ss(720,530),
         AnchorPoint=Vector2.new(0.5,0.5), Position=UDim2.new(0.5,0,0.5,0),
         BackgroundColor3=thm.Background,
         BackgroundTransparency=self.Acrylic and 0.45 or 0,
@@ -3562,13 +3575,13 @@ function Aurora:CreateWindow(cfg)
         ZIndex=0,
         Parent=main,
     })
-    make("UICorner",{CornerRadius=sz(16),Parent=bgImg})
+    make("UICorner",{CornerRadius=sz(20),Parent=bgImg})
     reg(bgImg, "Image", "BackgroundImage")
     reg(bgImg, "ImageTransparency", "BackgroundImageTransparency")
     if self.Acrylic then
         createAcrylic(main)
     end
-    make("UICorner",{CornerRadius=sz(16),Parent=main})
+    make("UICorner",{CornerRadius=sz(20),Parent=main})
     make("UIGradient",{
         Color=ColorSequence.new({
             ColorSequenceKeypoint.new(0.00,Color3.fromRGB(22,22,28)),
@@ -3592,68 +3605,72 @@ function Aurora:CreateWindow(cfg)
         BackgroundTransparency=0.72,BorderSizePixel=0,ZIndex=2,Parent=main,
     })
 
-    -- Sidebar
-    local sidebarTrans = self.Acrylic and 0.6 or 0.1
-    local sidebar=make("Frame",{Size=UDim2.new(0,s(185),1,0),BackgroundColor3=thm.Sidebar,BackgroundTransparency=sidebarTrans,Parent=main})
+    -- Sidebar (Apple-style: cleaner, more rounded inner elements)
+    local sidebarTrans = self.Acrylic and 0.6 or 0.08
+    local sidebar=make("Frame",{Size=UDim2.new(0,s(192),1,0),BackgroundColor3=thm.Sidebar,BackgroundTransparency=sidebarTrans,Parent=main})
     make("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,0,0,0),BackgroundColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=0.88,BorderSizePixel=0,Parent=sidebar})
     make("UIGradient",{
         Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(24,24,30)),ColorSequenceKeypoint.new(1,Color3.fromRGB(12,12,16))}),
         Rotation=90, Parent=sidebar,
     })
 
-    local logoFrame=make("Frame",{Size=UDim2.new(1,0,0,s(50)),BackgroundTransparency=1,Parent=sidebar})
-    make("UIPadding",{PaddingLeft=sz(14),PaddingTop=sz(12),Parent=logoFrame})
-    local logoIco=make("ImageLabel",{Size=ss(18,18),AnchorPoint=Vector2.new(0,0.5),Position=UDim2.new(0,0,0.5,0),BackgroundTransparency=1,Parent=logoFrame})
+    -- Logo / header area
+    local logoFrame=make("Frame",{Size=UDim2.new(1,0,0,s(56)),BackgroundTransparency=1,Parent=sidebar})
+    make("UIPadding",{PaddingLeft=sz(14),PaddingTop=sz(14),Parent=logoFrame})
+    local logoIco=make("ImageLabel",{Size=ss(20,20),AnchorPoint=Vector2.new(0,0.5),Position=UDim2.new(0,0,0.5,-s(3)),BackgroundTransparency=1,Parent=logoFrame})
     applyIcon(logoIco,"solar/star-bold",thm.Accent)
     make("TextLabel",{
-        Size=UDim2.new(1,-s(28),1,0),Position=UDim2.new(0,s(24),0,0),
+        Size=UDim2.new(1,-s(30),0,s(16)),Position=UDim2.new(0,s(26),0,s(10)),
         BackgroundTransparency=1,Text=cfg.Title or "Aurora",TextColor3=thm.Text,
-        TextSize=fs(14),Font=Enum.Font.GothamBlack,TextXAlignment=Enum.TextXAlignment.Left,Parent=logoFrame,
+        TextSize=fs(16),Font=Enum.Font.GothamBlack,TextXAlignment=Enum.TextXAlignment.Left,Parent=logoFrame,
     })
     if cfg.SubTitle then
         make("TextLabel",{
-            Size=UDim2.new(1,-s(28),0,s(12)),Position=UDim2.new(0,s(24),1,-s(14)),
+            Size=UDim2.new(1,-s(30),0,s(11)),Position=UDim2.new(0,s(26),0,s(28)),
             BackgroundTransparency=1,Text=cfg.SubTitle,TextColor3=thm.SubText,
-            TextSize=fs(9),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=logoFrame,
+            TextSize=fs(10),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=logoFrame,
         })
     end
-    make("Frame",{Size=UDim2.new(1,-s(28),0,s(1)),Position=UDim2.new(0,s(14),1,-1),BackgroundColor3=thm.Accent,BackgroundTransparency=0.7,BorderSizePixel=0,Parent=logoFrame})
+    -- Separator line under logo
+    make("Frame",{Size=UDim2.new(1,-s(24),0,s(1)),Position=UDim2.new(0,s(12),1,-1),BackgroundColor3=thm.Border,BackgroundTransparency=0.3,BorderSizePixel=0,Parent=logoFrame})
 
-    local userPanel=make("Frame",{Size=UDim2.new(1,-s(18),0,s(44)),Position=UDim2.new(0,s(9),0,s(54)),BackgroundColor3=thm.Element,BackgroundTransparency=0.45,Parent=sidebar})
-    make("UICorner",{CornerRadius=sz(7),Parent=userPanel})
-    make("UIStroke",{Color=thm.Border,Thickness=1,Transparency=0.55,Parent=userPanel})
-    local avatarImg=make("ImageLabel",{Size=ss(28,28),Position=UDim2.new(0,s(8),0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundColor3=thm.Element,BackgroundTransparency=0.5,Parent=userPanel})
+    -- User panel (rounded card, Apple-style)
+    local userPanel=make("Frame",{Size=UDim2.new(1,-s(20),0,s(48)),Position=UDim2.new(0,s(10),0,s(60)),BackgroundColor3=thm.Element,BackgroundTransparency=0.35,Parent=sidebar})
+    make("UICorner",{CornerRadius=sz(12),Parent=userPanel})
+    make("UIStroke",{Color=thm.Border,Thickness=1,Transparency=0.4,Parent=userPanel})
+    local avatarImg=make("ImageLabel",{Size=ss(30,30),Position=UDim2.new(0,s(9),0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundColor3=thm.Element,BackgroundTransparency=0.4,Parent=userPanel})
     make("UICorner",{CornerRadius=UDim.new(1,0),Parent=avatarImg})
-    make("UIStroke",{Color=thm.Accent,Thickness=1,Transparency=0.5,Parent=avatarImg})
+    make("UIStroke",{Color=thm.Accent,Thickness=1.5,Transparency=0.4,Parent=avatarImg})
     task.spawn(function()
         pcall(function()
             local content,isReady=Players:GetUserThumbnailAsync(LocalPlayer.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size48x48)
             if isReady and avatarImg and avatarImg.Parent then avatarImg.Image=content end
         end)
     end)
-    make("TextLabel",{Size=UDim2.new(1,-s(46),0,s(13)),Position=UDim2.new(0,s(42),0,s(6)),BackgroundTransparency=1,Text="Welcome back,",TextColor3=thm.SubText,TextSize=fs(9),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=userPanel})
-    make("TextLabel",{Size=UDim2.new(1,-s(46),0,s(14)),Position=UDim2.new(0,s(42),0,s(20)),BackgroundTransparency=1,Text=LocalPlayer.DisplayName or LocalPlayer.Name,TextColor3=thm.Text,TextSize=fs(11),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=userPanel})
+    make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(13)),Position=UDim2.new(0,s(46),0,s(7)),BackgroundTransparency=1,Text="Welcome back,",TextColor3=thm.SubText,TextSize=fs(10),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=userPanel})
+    make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(15)),Position=UDim2.new(0,s(46),0,s(22)),BackgroundTransparency=1,Text=LocalPlayer.DisplayName or LocalPlayer.Name,TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=userPanel})
 
-    local searchFrame=make("Frame",{Size=UDim2.new(1,-s(18),0,s(28)),Position=UDim2.new(0,s(9),0,s(102)),BackgroundColor3=thm.InputBG,BackgroundTransparency=0.4,Parent=sidebar})
-    make("UICorner",{CornerRadius=sz(7),Parent=searchFrame})
-    make("UIStroke",{Color=thm.Border,Thickness=1,Transparency=0.55,Parent=searchFrame})
-    local searchIco=make("ImageLabel",{Size=ss(12,12),Position=UDim2.new(0,s(8),0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundTransparency=1,Parent=searchFrame})
+    -- Search bar (more rounded, Apple-style)
+    local searchFrame=make("Frame",{Size=UDim2.new(1,-s(20),0,s(30)),Position=UDim2.new(0,s(10),0,s(114)),BackgroundColor3=thm.InputBG,BackgroundTransparency=0.3,Parent=sidebar})
+    make("UICorner",{CornerRadius=sz(10),Parent=searchFrame})
+    make("UIStroke",{Color=thm.Border,Thickness=1,Transparency=0.5,Parent=searchFrame})
+    local searchIco=make("ImageLabel",{Size=ss(13,13),Position=UDim2.new(0,s(9),0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundTransparency=1,Parent=searchFrame})
     applyIcon(searchIco,"solar/magnifer-linear",thm.SubText)
     local searchBox=make("TextBox",{
-        Size=UDim2.new(1,-s(28),1,0),Position=UDim2.new(0,s(24),0,0),
+        Size=UDim2.new(1,-s(30),1,0),Position=UDim2.new(0,s(26),0,0),
         BackgroundTransparency=1,PlaceholderText="Search tabs...",PlaceholderColor3=thm.SubText,
-        Text="",TextColor3=thm.Text,TextSize=fs(11),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=searchFrame,
+        Text="",TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=searchFrame,
     })
 
     local tabScroll=make("ScrollingFrame",{
-        Size=UDim2.new(1,0,1,-s(136)),Position=UDim2.new(0,0,0,s(136)),
+        Size=UDim2.new(1,0,1,-s(150)),Position=UDim2.new(0,0,0,s(150)),
         BackgroundTransparency=1,ScrollBarThickness=s(2),ScrollBarImageColor3=thm.Scrollbar,Parent=sidebar,
     })
-    local slay=make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(3),Parent=tabScroll})
+    local slay=make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(2),Parent=tabScroll})
     make("UIPadding",{PaddingTop=sz(6),PaddingBottom=sz(6),PaddingLeft=sz(8),PaddingRight=sz(8),Parent=tabScroll})
     slay.Changed:Connect(function() tabScroll.CanvasSize=UDim2.new(0,0,0,slay.AbsoluteContentSize.Y+s(12)) end)
 
-    local content=make("Frame",{Size=UDim2.new(1,-s(185),1,0),Position=UDim2.new(0,s(185),0,0),BackgroundTransparency=1,Parent=main})
+    local content=make("Frame",{Size=UDim2.new(1,-s(192),1,0),Position=UDim2.new(0,s(192),0,0),BackgroundTransparency=1,Parent=main})
     local topTrans = self.Acrylic and 0.65 or 0.1
     local top=make("Frame",{Size=UDim2.new(1,0,0,s(50)),BackgroundColor3=thm.TopBar,BackgroundTransparency=topTrans,Parent=content})
     make("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=0.9,BorderSizePixel=0,Parent=top})
@@ -3662,7 +3679,7 @@ function Aurora:CreateWindow(cfg)
     -- Window controls
     local function makeCtrlBtn(order, hoverBG)
         local btn=make("TextButton",{Size=ss(20,20),BackgroundTransparency=1,Text="",LayoutOrder=order,ZIndex=10000,Parent=nil})
-        make("UICorner",{CornerRadius=sz(5),Parent=btn})
+        make("UICorner",{CornerRadius=sz(8),Parent=btn})
         btn.MouseEnter:Connect(function() tw(btn,{BackgroundColor3=hoverBG,BackgroundTransparency=0.15},0.1) end)
         btn.MouseLeave:Connect(function() tw(btn,{BackgroundTransparency=1},0.1) end)
         return btn
@@ -3884,15 +3901,15 @@ function Aurora:CreateWindow(cfg)
         make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(8),HorizontalAlignment=Enum.HorizontalAlignment.Center,Parent=prompt})
         local warnIco=make("ImageLabel",{Size=ss(26,26),BackgroundTransparency=1,LayoutOrder=0,Parent=prompt})
         applyIcon(warnIco,"solar/danger-bold",thm.AlertWarn)
-        make("TextLabel",{Size=UDim2.new(1,0,0,s(16)),BackgroundTransparency=1,Text="Close Interface",TextColor3=thm.Text,TextSize=fs(13),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Center,LayoutOrder=1,Parent=prompt})
-        make("TextLabel",{Size=UDim2.new(1,0,0,s(28)),BackgroundTransparency=1,Text="Active features will keep running.",TextColor3=thm.SubText,TextSize=fs(11),Font=Enum.Font.Gotham,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Center,LayoutOrder=2,Parent=prompt})
+        make("TextLabel",{Size=UDim2.new(1,0,0,s(16)),BackgroundTransparency=1,Text="Close Interface",TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Center,LayoutOrder=1,Parent=prompt})
+        make("TextLabel",{Size=UDim2.new(1,0,0,s(28)),BackgroundTransparency=1,Text="Active features will keep running.",TextColor3=thm.SubText,TextSize=fs(16),Font=Enum.Font.Gotham,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Center,LayoutOrder=2,Parent=prompt})
         local btnRow=make("Frame",{Size=UDim2.new(1,0,0,s(26)),BackgroundTransparency=1,LayoutOrder=3,Parent=prompt})
         make("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,HorizontalAlignment=Enum.HorizontalAlignment.Center,SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(10),Parent=btnRow})
-        local noBtn=make("TextButton",{Size=ss(88,24),BackgroundColor3=thm.Element,Text="Cancel",TextColor3=thm.SubText,TextSize=fs(12),Font=Enum.Font.GothamBold,LayoutOrder=1,Parent=btnRow})
-        make("UICorner",{CornerRadius=sz(6),Parent=noBtn})
+        local noBtn=make("TextButton",{Size=ss(88,24),BackgroundColor3=thm.Element,Text="Cancel",TextColor3=thm.SubText,TextSize=fs(16),Font=Enum.Font.GothamBold,LayoutOrder=1,Parent=btnRow})
+        make("UICorner",{CornerRadius=sz(10),Parent=noBtn})
         make("UIStroke",{Color=thm.Border,Thickness=1,Parent=noBtn})
-        local yesBtn=make("TextButton",{Size=ss(88,24),BackgroundColor3=thm.AlertError,Text="Close",TextColor3=Color3.fromRGB(255,255,255),TextSize=fs(12),Font=Enum.Font.GothamBold,LayoutOrder=2,Parent=btnRow})
-        make("UICorner",{CornerRadius=sz(6),Parent=yesBtn})
+        local yesBtn=make("TextButton",{Size=ss(88,24),BackgroundColor3=thm.AlertError,Text="Close",TextColor3=Color3.fromRGB(255,255,255),TextSize=fs(16),Font=Enum.Font.GothamBold,LayoutOrder=2,Parent=btnRow})
+        make("UICorner",{CornerRadius=sz(10),Parent=yesBtn})
         yesBtn.MouseEnter:Connect(function() tw(yesBtn,{BackgroundColor3=Color3.fromRGB(240,75,75)},0.1) end)
         yesBtn.MouseLeave:Connect(function() tw(yesBtn,{BackgroundColor3=thm.AlertError},0.1) end)
         noBtn.MouseEnter:Connect(function() tw(noBtn,{BackgroundColor3=thm.ElementHover},0.1) end)
@@ -4003,8 +4020,8 @@ function Aurora:CreateWindow(cfg)
             BackgroundTransparency = 0.5,
             Parent = sidebar,
         })
-        make("UICorner", { CornerRadius = sz(7), Parent = kbBadge })
-        make("UIStroke", { Color = thm.Border, Thickness = 1, Transparency = 0.6, Parent = kbBadge })
+        make("UICorner", { CornerRadius = sz(10), Parent = kbBadge })
+        make("UIStroke", { Color = thm.Border, Thickness = 1, Transparency = 0.5, Parent = kbBadge })
         make("UIPadding", { PaddingLeft = sz(8), PaddingRight = sz(8), Parent = kbBadge })
         local kbIco = make("ImageLabel", {
             Size = ss(12, 12),
@@ -4129,7 +4146,7 @@ function Aurora:CreateWindow(cfg)
                 LayoutOrder = idx,
                 Parent = btnRow
             })
-            make("UICorner", { CornerRadius = sz(6), Parent = btn })
+            make("UICorner", { CornerRadius = sz(11), Parent = btn })
             if idx == 1 then
                 make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = btn })
             end
@@ -4183,7 +4200,7 @@ function Aurora:CreateWindow(cfg)
                 ZIndex = 50,
                 Parent = sidebar,
             })
-            make("UICorner", { CornerRadius = sz(8), Parent = drop })
+            make("UICorner", { CornerRadius = sz(11), Parent = drop })
             make("UIStroke", { Color = thm.Border, Thickness = 1, Transparency = 0.4, Parent = drop })
             local dropList = make("UIListLayout", {
                 SortOrder = Enum.SortOrder.LayoutOrder,
@@ -4265,7 +4282,7 @@ function Aurora:CreateWindow(cfg)
                     ZIndex = 52,
                     Parent = drop,
                 })
-                make("UICorner", { CornerRadius = sz(6), Parent = row })
+                make("UICorner", { CornerRadius = sz(9), Parent = row })
                 -- Element name
                 make("TextLabel", {
                     Size = UDim2.new(1, -s(8), 0, s(16)),
@@ -4340,13 +4357,13 @@ function Aurora:CreateWindow(cfg)
     function win:AddCategory(title, icon)
         local category={Tabs={},Expanded=true}
         local header=make("TextButton",{Size=UDim2.new(1,0,0,s(24)),BackgroundTransparency=1,AutoButtonColor=false,Text="",Parent=tabScroll})
-        make("UICorner",{CornerRadius=sz(5),Parent=header})
+        make("UICorner",{CornerRadius=sz(9),Parent=header})
         
         local arrow=make("ImageLabel",{Size=ss(10,10),Position=UDim2.new(0,s(4),0.5,-s(5)),BackgroundTransparency=1,Parent=header})
         local label=make("TextLabel",{
             Size=UDim2.new(1,-s(20),1,0),Position=UDim2.new(0,s(18),0,0),
             BackgroundTransparency=1,Text=string.upper(title),
-            TextSize=fs(9),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=header,
+            TextSize=fs(10),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=header,
         })
 
         local isHovering = false
@@ -4404,11 +4421,11 @@ function Aurora:CreateWindow(cfg)
         end
         local tabParent=parentContainer or tabScroll
         local btn=make("TextButton",{Size=UDim2.new(1,0,0,s(34)),BackgroundTransparency=1,Text="",Parent=tabParent})
-        make("UICorner",{CornerRadius=sz(7),Parent=btn})
+        make("UICorner",{CornerRadius=sz(10),Parent=btn})
         local lbl=make("TextLabel",{
-            Size=UDim2.new(1,-s(36),1,0),Position=UDim2.new(0,s(32),0,0),
+            Size=UDim2.new(1,-s(38),1,0),Position=UDim2.new(0,s(34),0,0),
             BackgroundTransparency=1,Text=tcfg.Title,TextColor3=thm.TabInactive,
-            TextSize=fs(12),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=btn,
+            TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=btn,
         })
         local ico=make("ImageLabel",{Size=ss(16,16),Position=UDim2.new(0,s(8),0.5,-s(8)),BackgroundTransparency=1,Parent=btn})
         applyIcon(ico,tcfg.Icon,thm.TabInactive)
@@ -4422,8 +4439,9 @@ function Aurora:CreateWindow(cfg)
             end)
         end
 
+        -- Left accent indicator (pill style)
         local indicator=make("Frame",{
-            Size=UDim2.new(0,s(3),0,s(16)),Position=UDim2.new(0,s(2),0.5,-s(8)),
+            Size=UDim2.new(0,s(3),0,s(18)),Position=UDim2.new(0,s(3),0.5,-s(9)),
             BackgroundColor3=thm.Accent,BorderSizePixel=0,Visible=false,Parent=btn,
         })
         make("UICorner",{CornerRadius=sz(2),Parent=indicator})
@@ -4440,16 +4458,16 @@ function Aurora:CreateWindow(cfg)
         btn.MouseEnter:Connect(function()
             if activeTab ~= t then
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
-                tw(btn, { BackgroundColor3 = currentThm.ElementHover, BackgroundTransparency = 0.55 }, 0.12)
-                tw(lbl, { TextColor3 = currentThm.Text }, 0.12)
+                tw(btn, { BackgroundColor3 = currentThm.ElementHover, BackgroundTransparency = 0.6 }, 0.15)
+                tw(lbl, { TextColor3 = currentThm.Text }, 0.15)
                 if ico then applyIcon(ico, tcfg.Icon, currentThm.Text) end
             end
         end)
         btn.MouseLeave:Connect(function()
             if activeTab ~= t then
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
-                tw(btn, { BackgroundTransparency = 1 }, 0.12)
-                tw(lbl, { TextColor3 = currentThm.TabInactive }, 0.12)
+                tw(btn, { BackgroundTransparency = 1 }, 0.15)
+                tw(lbl, { TextColor3 = currentThm.TabInactive }, 0.15)
                 if ico then applyIcon(ico, tcfg.Icon, currentThm.TabInactive) end
             end
         end)
@@ -4458,15 +4476,16 @@ function Aurora:CreateWindow(cfg)
             local currentThm = Aurora.Theme or Aurora.Themes.Dark
             if activeTab then
                 activeTab.Page.Visible=false
-                tw(activeTab.Button,{BackgroundColor3=currentThm.Sidebar,BackgroundTransparency=1},0.15)
+                tw(activeTab.Button,{BackgroundColor3=currentThm.Sidebar,BackgroundTransparency=1},0.18)
                 activeTab.TextLabel.TextColor3=currentThm.TabInactive
                 if activeTab.IconImg then applyIcon(activeTab.IconImg,activeTab.IconStr,currentThm.TabInactive) end
                 activeTab.Indicator.Visible=false
             end
             activeTab=t; activeTab.Page.Visible=true
-            activeTab.Page.Position = UDim2.new(0, 0, 0.03, 0)
-            tw(activeTab.Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            tw(btn,{BackgroundColor3=currentThm.Element,BackgroundTransparency=0},0.15)
+            activeTab.Page.Position = UDim2.new(0, 0, 0.025, 0)
+            tw(activeTab.Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            -- Active tab: soft accent background, bolder accent text
+            tw(btn,{BackgroundColor3=currentThm.Accent,BackgroundTransparency=0.85},0.18)
             lbl.TextColor3=currentThm.Accent
             if ico then applyIcon(ico,tcfg.Icon,currentThm.Accent) end
             indicator.Visible=true
@@ -4478,7 +4497,7 @@ function Aurora:CreateWindow(cfg)
 
         if #win.Tabs==0 then
             activeTab=t; t.Page.Visible=true
-            btn.BackgroundTransparency=0; btn.BackgroundColor3=thm.Element
+            btn.BackgroundTransparency=0.85; btn.BackgroundColor3=thm.Accent
             lbl.TextColor3=thm.Accent
             if ico then applyIcon(ico,tcfg.Icon,thm.Accent) end
             indicator.Visible=true
@@ -4490,8 +4509,8 @@ function Aurora:CreateWindow(cfg)
                 if not btn or not btn.Parent then return end
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
                 if activeTab == t then
-                    btn.BackgroundColor3 = currentThm.Element
-                    btn.BackgroundTransparency = 0
+                    btn.BackgroundColor3 = currentThm.Accent
+                    btn.BackgroundTransparency = 0.85
                     lbl.TextColor3 = currentThm.Accent
                     indicator.BackgroundColor3 = currentThm.Accent
                     if ico then applyIcon(ico, tcfg.Icon, currentThm.Accent) end
@@ -4785,7 +4804,7 @@ function Aurora:Watermark(wcfg)
         BackgroundTransparency = 0.35,
         Parent = gui
     })
-    make("UICorner", { CornerRadius = sz(6), Parent = frame })
+    make("UICorner", { CornerRadius = sz(10), Parent = frame })
     local wStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = frame })
     make("UIPadding", { PaddingLeft = sz(8), PaddingRight = sz(8), Parent = frame })
     
@@ -4916,7 +4935,7 @@ function Aurora:KeybindList(kcfg)
         ClipsDescendants = true,
         Parent = gui
     })
-    make("UICorner", { CornerRadius = sz(8), Parent = mainFrame })
+    make("UICorner", { CornerRadius = sz(11), Parent = mainFrame })
     local mStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = mainFrame })
     
     local header = make("Frame", {
@@ -4925,7 +4944,7 @@ function Aurora:KeybindList(kcfg)
         BackgroundTransparency = 0.5,
         Parent = mainFrame
     })
-    make("UICorner", { CornerRadius = sz(8), Parent = header })
+    make("UICorner", { CornerRadius = sz(11), Parent = header })
     make("UIPadding", { PaddingLeft = sz(8), PaddingRight = sz(8), Parent = header })
     
     local title = make("TextLabel", {
@@ -5232,7 +5251,7 @@ function Section:AddAudio(id, cfg)
         Parent = game:GetService("SoundService")
     })
     local f = elemFrame(self.Container)
-    local topF = make("Frame", { Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1, Parent=f })
+    local topF = make("Frame", { Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1, Parent=f })
     local tx = 0
     if cfg.Icon then
         local ico = make("ImageLabel",{Size=ss(16,16),BackgroundTransparency=1,Parent=topF})
@@ -5240,7 +5259,7 @@ function Section:AddAudio(id, cfg)
     end
     local titleLabel = make("TextLabel", {
         Size=UDim2.new(1,-tx-s(100),0,0), Position=UDim2.new(0,tx,0,0), AutomaticSize=Enum.AutomaticSize.Y,
-        BackgroundTransparency=1, Text=cfg.Title or "Audio Player", TextColor3=thm.Text, TextSize=fs(13),
+        BackgroundTransparency=1, Text=cfg.Title or "Audio Player", TextColor3=thm.Text, TextSize=fs(16),
         Font=Enum.Font.GothamBold, TextXAlignment=Enum.TextXAlignment.Left, Parent=topF,
     })
     local rightControls = make("Frame", {
@@ -5250,11 +5269,11 @@ function Section:AddAudio(id, cfg)
     make("UIListLayout", { FillDirection=Enum.FillDirection.Horizontal, HorizontalAlignment=Enum.HorizontalAlignment.Right, VerticalAlignment=Enum.VerticalAlignment.Center, Padding=sz(5), Parent=rightControls })
     
     local playBtn = make("TextButton", { Size=ss(40,20), BackgroundColor3=thm.InputBG, Text="Play", TextColor3=thm.Text, Font=Enum.Font.GothamBold, TextSize=fs(10), Parent=rightControls })
-    make("UICorner", { CornerRadius=sz(4), Parent=playBtn })
+    make("UICorner", { CornerRadius=sz(8), Parent=playBtn })
     make("UIStroke", { Color=thm.Border, Thickness=1, Parent=playBtn })
     
     local stopBtn = make("TextButton", { Size=ss(40,20), BackgroundColor3=thm.InputBG, Text="Stop", TextColor3=thm.Text, Font=Enum.Font.GothamBold, TextSize=fs(10), Parent=rightControls })
-    make("UICorner", { CornerRadius=sz(4), Parent=stopBtn })
+    make("UICorner", { CornerRadius=sz(8), Parent=stopBtn })
     make("UIStroke", { Color=thm.Border, Thickness=1, Parent=stopBtn })
     
     playBtn.MouseButton1Click:Connect(function() sound:Play() end)
@@ -5280,24 +5299,24 @@ function Section:AddCode(id, cfg)
         TextSize=fs(10), Font=Enum.Font.GothamBold, TextXAlignment=Enum.TextXAlignment.Left, Parent=f,
     })
     local codeBG = make("Frame", {
-        Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y, BackgroundColor3=thm.InputBG, Parent=f,
+        Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y, BackgroundColor3=thm.InputBG, Parent=f,
     })
-    make("UICorner", { CornerRadius=sz(5), Parent=codeBG })
+    make("UICorner", { CornerRadius=sz(9), Parent=codeBG })
     make("UIStroke", { Color=thm.Border, Thickness=1, Parent=codeBG })
     make("UIPadding", { PaddingTop=sz(8), PaddingBottom=sz(8), PaddingLeft=sz(10), PaddingRight=sz(10), Parent=codeBG })
     
     local codeLbl = make("TextLabel", {
-        Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1,
-        Text=cfg.Code or "", TextColor3=thm.Accent, TextSize=fs(11), Font=Enum.Font.Code,
+        Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1,
+        Text=cfg.Code or "", TextColor3=thm.Accent, TextSize=fs(16), Font=Enum.Font.Code,
         TextXAlignment=Enum.TextXAlignment.Left, TextWrapped=true, Parent=codeBG,
     })
     
     local copyBtn = make("TextButton", {
         Size=ss(45,18), AnchorPoint=Vector2.new(1,0), Position=UDim2.new(1,0,0,0),
-        BackgroundColor3=thm.Element, Text="Copy", TextColor3=thm.Text, Font=Enum.Font.GothamBold, TextSize=fs(9),
+        BackgroundColor3=thm.Element, Text="Copy", TextColor3=thm.Text, Font=Enum.Font.GothamBold, TextSize=fs(10),
         Parent=f
     })
-    make("UICorner", { CornerRadius=sz(4), Parent=copyBtn })
+    make("UICorner", { CornerRadius=sz(8), Parent=copyBtn })
     copyBtn.MouseButton1Click:Connect(function()
         pcall(function() toclipboard(cfg.Code or "") end)
     end)
@@ -5327,7 +5346,7 @@ function Section:AddVideo(id, cfg)
         ClipsDescendants = true,
         Parent = f
     })
-    make("UICorner", { CornerRadius = sz(6), Parent = videoContainer })
+    make("UICorner", { CornerRadius = sz(10), Parent = videoContainer })
     local stroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = videoContainer })
     
     local videoFrame
@@ -5344,7 +5363,7 @@ function Section:AddVideo(id, cfg)
             Volume = volume,
             Parent = videoContainer
         })
-        make("UICorner", { CornerRadius = sz(6), Parent = videoFrame })
+        make("UICorner", { CornerRadius = sz(10), Parent = videoFrame })
         if isPlaying then
             task.spawn(function()
                 pcall(function() videoFrame:Play() end)
@@ -5539,7 +5558,7 @@ function Section:AddViewport(id, cfg)
             Text = "",
             Parent = toolBar,
         })
-        make("UICorner", { CornerRadius = sz(6), Parent = btn })
+        make("UICorner", { CornerRadius = sz(11), Parent = btn })
         local bStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Transparency = 0.4, Parent = btn })
         reg(bStroke, "Color", "Border")
         reg(btn, "BackgroundColor3", "Element")
@@ -6672,7 +6691,7 @@ function KeySystem.new(cfg)
         BorderSizePixel = 0,
         Parent = mainFrame
     })
-    make("UICorner", { CornerRadius = sz(8), Parent = inputBG })
+    make("UICorner", { CornerRadius = sz(12), Parent = inputBG })
     local inputStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = inputBG })
     
     local textBox = make("TextBox", {
@@ -6708,7 +6727,7 @@ function KeySystem.new(cfg)
         AutoButtonColor = false,
         Parent = btnFrame
     })
-    make("UICorner", { CornerRadius = sz(8), Parent = verifyBtn })
+    make("UICorner", { CornerRadius = sz(12), Parent = verifyBtn })
     
     -- Get Key Button (or Copy Link)
     local getBtn = make("TextButton", {
@@ -6722,7 +6741,7 @@ function KeySystem.new(cfg)
         AutoButtonColor = false,
         Parent = btnFrame
     })
-    make("UICorner", { CornerRadius = sz(8), Parent = getBtn })
+    make("UICorner", { CornerRadius = sz(12), Parent = getBtn })
     local getStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = getBtn })
     
     -- Status Label
@@ -6958,7 +6977,7 @@ function Section:AddProgressBar(id, cfg)
         BorderSizePixel = 0,
         Parent = f
     })
-    make("UICorner", { CornerRadius = sz(4), Parent = track })
+    make("UICorner", { CornerRadius = sz(6), Parent = track })
     local stroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = track })
     
     local fill = make("Frame", {
@@ -6967,7 +6986,7 @@ function Section:AddProgressBar(id, cfg)
         BorderSizePixel = 0,
         Parent = track
     })
-    make("UICorner", { CornerRadius = sz(4), Parent = fill })
+    make("UICorner", { CornerRadius = sz(6), Parent = fill })
     
     local valLbl = make("TextLabel", {
         Size = UDim2.new(1, 0, 0, s(12)),

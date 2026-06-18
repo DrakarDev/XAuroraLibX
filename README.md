@@ -4,28 +4,13 @@
 ![Version](https://img.shields.io/badge/Version-4.5-red?style=for-the-badge)
 ![Lua](https://img.shields.io/badge/Language-Lua-blue?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Roblox-orange?style=for-the-badge)
+![Style](https://img.shields.io/badge/Style-Apple--Inspired-black?style=for-the-badge)
 
-AuroraLib is a premium UI library for Roblox executors. It features a glass-effect window inspired by FluentPro, a professional 2D colorpicker with SV canvas, 8-directional edge resizing, collapsible sidebar categories, horizontally scrollable sub-tabs, filtered searchable dropdowns, manual textbox sliders, and inline component chaining. Fully scalable and text-wrapping-safe.
-
----
-
-## 🚀 Features & What's New in v4.5
-
-- 📱 **Smart Platform Auto-Detection**: No more manual mobile layout overrides! The library automatically detects if a player is on a touch-only mobile device or a desktop PC. Mobile features floating pill-toggles and a dedicated Show/Hide button, while PC maps actions purely to physical keybind inputs.
-- 🔍 **Global Interactive Search Registry**: A global search bar in the sidebar that performs a full-script search to instantly find and navigate to any interactive element (Toggles, Buttons, Sliders, Dropdowns, etc.) across all tabs.
-- 🔔 **Advanced Notification System**: Bouncy spring animations, actionable notifications with buttons, input fields inside notifications, and dynamic progress bars.
-- 📊 **Draggable HUD Monitors**: Create custom draggable on-screen display panels to track script stats, FPS, Ping, or any custom variables in real-time.
-- 🧹 **Complete Garbage Collection**: Safe script unloading (`Window:Destroy()`) to prevent memory leaks.
-- ☁️ **Cloud Configuration Sharing**: Share and load configurations seamlessly across the cloud using the built-in SaveManager cloud API.
-- 🎯 **Interactive Elements Enhancements**: Pill-style toggle switches, expanding slider knobs, expanding button ripple effects, and gradient section headers.
-- 🌸 **New Theme - Sakura**: Cherry-blossom pink light theme.
-- ⚡ **Performance Optimized**: Progressive rendering, debounced interactions, and tween caching.
+AuroraLib is a premium Roblox executor UI library with an Apple-inspired design language. Features fully rounded elements, pill-style sub-tabs, glass-effect windows, 8-directional resizing, searchable dropdowns, animated toggles, inline colorpickers, keybinds, and more. Fully scalable and theme-aware.
 
 ---
 
-## ⚡ Quick Start
-
-Load the library directly from GitHub in your executor:
+## ⚡ Quick Load
 
 ```lua
 local Aurora = loadstring(game:HttpGet(
@@ -35,418 +20,482 @@ local Aurora = loadstring(game:HttpGet(
 
 ---
 
-## 🖥️ Window Initialization & API
-
-Create the main window with custom configuration settings:
+## 🖥️ Creating a Window
 
 ```lua
 local Window = Aurora:CreateWindow({
-    Title        = "Aurora Premium",        -- Main header title
-    SubTitle     = "Booga Booga Edition",   -- Small subtext next to/below title
-    Theme        = "Dark",                  -- Themes: "Dark", "Ocean", "Amethyst", "Neon", "Sakura", etc.
-    Scale        = 1.0,                     -- UI scale multiplier (0.7 to 2.0)
-    Size         = UDim2.fromOffset(800, 560), -- Default window size
-    MinimizeKey  = Enum.KeyCode.RightControl, -- Keybind to hide/show the entire GUI
-    Acrylic      = false,                   -- Enables premium glass/acrylic blur background
-    LazyLoad     = true,                    -- Enables progressive loading of elements (FPS friendly)
-    DelayPerElement = 0.01,                 -- Loading delay in seconds per element
-    DelayPerSection = 0.02,                 -- Loading delay in seconds per section
-    DelayPerTab  = 0.05,                    -- Loading delay in seconds per tab
-    FadeIn       = true                     -- Elements progressively fade in as they instantiate
+    Title        = "My Script",          -- Title shown in sidebar
+    SubTitle     = "By DyxDev",          -- Subtitle shown below title
+    Theme        = "Dark",               -- See themes list below
+    Scale        = 1.0,                  -- UI scale (0.7 to 2.0)
+    Size         = UDim2.fromOffset(720, 530), -- Default window size
+    MinimizeKey  = Enum.KeyCode.RightControl, -- Keybind to toggle GUI
+    Acrylic      = false,                -- Glass/blur background effect
+    LazyLoad     = true,                 -- Progressive element loading
+    FadeIn       = true,                 -- Elements fade in on load
+    DelayPerElement = 0.01,
+    DelayPerSection = 0.02,
+    DelayPerTab  = 0.05,
 })
 ```
 
 ### Window Methods
 
-Control window properties programmatically at runtime:
-
 ```lua
-Window:SetVisible(true/false)               -- Shows or hides the window
-Window:Toggle()                             -- Toggles the window visibility state
-Window:SetMinimizeKey(Enum.KeyCode.F)       -- Changes the toggle hotkey
-Window:SetAcrylicTransparency(0.45)         -- Tweens window background transparency (e.g. 0.0 to 0.95)
-Window:SetBlurIntensity(1.0)                -- Tweens depth-of-field blur strength (e.g. 0.0 to 1.0)
-Window:Destroy()                            -- Completely destroys the UI and cleans memory
+Window:SetVisible(true)              -- Show/hide the window
+Window:Toggle()                      -- Toggle visibility
+Window:SetMinimizeKey(Enum.KeyCode.F) -- Change toggle keybind at runtime
+Window:Destroy()                     -- Destroy UI and clean memory
 ```
 
 ---
 
-## 🎨 Themes (25+ Available)
+## 🗂️ Navigation: Categories → Tabs → SubTabs → Sections
 
-**Built-in Themes:** `Dark`, `Light`, `Ocean`, `Amethyst`, `Neon`, `BloodRed`, `Midnight`, `NeonCyber`, `ArcticFrost`, `CottonCandy`, `Orange`, `Cyanic`, `AmberGlow`, `DeepViolet`, `Charcoal`, `PearlWhite`, `Galaxy`, `AMOLED`, `AshGray`, `NeonPurple`, `RoyalBlue`, `DeepOcean`, `MidnightBlue`, `CosmicViolet`, **`Sakura`** 🌸, `RGB` (chroma)
+### 1. Add a Category (sidebar group header)
 
-### Theme Methods
 ```lua
-Aurora:SetTheme("CyberGlow")
+local MyCategory = Window:AddCategory("Main Features", "solar/star-bold")
+```
 
--- Create custom theme palette (Missing keys fallback to Dark theme)
-Aurora:CreateTheme("CyberGlow", {
-    Background   = Color3.fromRGB(15, 10, 25),
-    Sidebar      = Color3.fromRGB(18, 12, 30),
-    Element      = Color3.fromRGB(28, 20, 45),
-    Accent       = Color3.fromRGB(0, 255, 200),
-    Text         = Color3.fromRGB(240, 255, 250),
-    SubText      = Color3.fromRGB(150, 165, 180),
-    Border       = Color3.fromRGB(50, 35, 75),
-    ToggleOn     = Color3.fromRGB(0, 255, 200),
-    SliderFill   = Color3.fromRGB(0, 255, 200),
-})
+### 2. Add a Tab (inside a category or standalone)
+
+```lua
+-- Inside a category:
+local CombatTab = MyCategory:AddTab({ Title = "Combat", Icon = "solar/sword-bold" })
+
+-- Standalone (no category):
+local SettingsTab = Window:AddTab({ Title = "Settings", Icon = "solar/settings-bold" })
+```
+
+### 3. Add Sub-Tabs (pill-style, Apple-inspired)
+
+```lua
+local AimTab    = CombatTab:AddSubTab("Aimbot")
+local ESPTab    = CombatTab:AddSubTab("ESP")
+local MiscTab   = CombatTab:AddSubTab("Misc")
+```
+
+### 4. Add a Section (inside a tab or subtab)
+
+```lua
+-- Inside a normal tab:
+local AimSection = CombatTab:AddSection("Aimbot Settings")
+
+-- Inside a subtab:
+local AimSection = AimTab:AddSection("Aimbot Settings")
+
+-- Two-column layout:
+local LeftCol, RightCol = CombatTab:AddColumns()
+local LeftSec  = LeftCol:AddSection("Left Panel")
+local RightSec = RightCol:AddSection("Right Panel")
+
+-- Collapsible section:
+local ExtraSec = LeftCol:AddSection("Extra", { Collapsible = true, DefaultExpanded = false })
+ExtraSec:SetCollapsed(true) -- Collapse at runtime
 ```
 
 ---
 
-## 🛡️ Key System & Verification
+## ⚙️ Elements
 
-Built-in premium license verification system. Blocks script execution and prompts the user to enter a key.
+All elements accept an **id** (string) and a **cfg** table. The id is used to access the element via `Aurora.Options.MyId.Value`.
+
+### Toggle
 
 ```lua
-local keyVerified = false
-Aurora.KeySystem.new({
-    Title = "Aurora Verification",
-    SubTitle = "License Verification Required",
-    Note = "Get your free license key from our Discord server.",
-    Keys = {"AuroraKey2026", "DevKey"},       -- Local valid keys list
-    KeyLink = "https://discord.gg/auroralib", -- Link to obtain key
-    SaveKey = true,                           -- Cache verified key to file
-    FileName = "AuroraLicense_Cache.txt",     -- Cache file name in workspace/
-    OnSuccess = function()
-        keyVerified = true
+local Tgl = AimSection:AddToggle("AimbotEnabled", {
+    Title       = "Enable Aimbot",
+    Description = "Snaps aim to nearest target",  -- optional subtitle
+    Default     = false,
+    Icon        = "solar/cursor-bold",             -- optional icon
+    Tooltip     = "Toggle aimbot on/off",          -- optional hover tip
+    Callback    = function(value)
+        print("Aimbot:", value)
     end
 })
 
-repeat task.wait(0.2) until keyVerified
-```
+-- Methods:
+Tgl:SetValue(true)                -- Set state programmatically
+Tgl:OnChanged(function(v) end)    -- Subscribe to changes
 
----
+-- Add inline keybind to toggle:
+Tgl:AddKeybind("AimbotKey", { Default = Enum.KeyCode.E })
 
-## 💾 SaveManager (Local & Cloud Configurations)
-
-Built-in SaveManager to easily persist script options locally and share them over the cloud.
-
-```lua
-Aurora.SaveManager:SetLibrary(Aurora)
-Aurora.SaveManager:SetFolder("AuroraSettings/MyGame")
-
--- Build config options inside a UI section automatically
-Aurora.SaveManager:BuildConfigSection(Section)
-
--- Exclude specific elements from saving
-Aurora.SaveManager:IgnoreIndexes({ "ThemeSelector", "AimbotBind" })
-
--- Ignore UI aesthetic settings
-Aurora.SaveManager:IgnoreThemeSettings()
-
--- Load autoload configurations
-Aurora.SaveManager:LoadAutoloadConfig()
-```
-
-### Cloud API Methods
-```lua
-Aurora.SaveManager:SaveCloud("ConfigName", "AuthorName", "Best legit config!", "GameName")
-Aurora.SaveManager:LoadCloud("ConfigName")
-Aurora.SaveManager:RefreshCloudConfigList()
-```
-
----
-
-## 📊 HUDs, Watermarks & Overlays
-
-### 1. Stats Watermark
-```lua
-local Watermark = Aurora:Watermark({ Enabled = true, Title = "Aurora Premium" })
-Watermark:SetTitle("New Title")
-Watermark:Destroy()
-```
-
-### 2. Keybinds Tracker HUD
-```lua
-local KeybindList = Aurora:KeybindList({ Enabled = true })
-KeybindList:Refresh()
-KeybindList:Destroy()
-```
-
-### 3. Custom Script HUD
-A custom draggable HUD panel for displaying real-time metrics.
-```lua
-local HUDObj = Aurora:CreateHUD({ Title = "Script Status", Width = 220 })
-HUDObj:SetItem("Status", "Idle")
-HUDObj:SetItem("FPS", "60")
-HUDObj:Toggle(true)
-```
-
----
-
-## 💬 Notifications & Dialogs
-
-### Advanced Notifications
-Trigger notifications with animations, inputs, or dynamic progress bars.
-
-```lua
--- Standard
-Aurora:Notify({ Title = "Loaded", Content = "Features ready.", Type = "Success", Duration = 5 })
-
--- Actionable (Buttons)
-Aurora:Notify({
-    Title = "Warning", Content = "Proceed?", Type = "Warning", Duration = 8,
-    Buttons = { { Title = "Confirm", Callback = function() end }, { Title = "Cancel" } }
-})
-
--- Input field
-Aurora:Notify({
-    Title = "Access", Content = "Enter key", Type = "Info", Duration = 0,
-    Input = true, InputPlaceholder = "Type...", InputCallback = function(text) print(text) end
-})
-
--- Dynamic Progress
-local notif = Aurora:Notify({ Title = "Downloading", Content = "Wait...", Duration = 0 })
-notif:SetProgress(0.5) -- Updates bar to 50%
-notif:Update({ Title = "Done", Content = "Finished!", Type = "Success", Duration = 3 })
-notif:Close() -- Manually closes the notification
-```
-
-### Modal Dialogs
-Centered modal overlays on top of the main UI window.
-```lua
-Window:Dialog({
-    Title = "Premium Modal", Content = "Are you sure you want to delete this config?",
-    Buttons = { { Title = "Cancel" }, { Title = "Delete", Callback = function() end } }
-})
-```
-
----
-
-## 🗂️ Navigation & Layout Structure
-
-The library uses a nested hierarchy: **Categories ➔ Tabs ➔ Sub-Tabs ➔ Columns ➔ Sections**.
-
-```lua
-local CatGame = Window:AddCategory("Main Features", "solar/danger-bold")
-local MainTab = CatGame:AddTab({ Title = "Combat", Icon = "solar/danger-bold" })
-local SubMelee = MainTab:AddSubTab("Melee")
-local LeftCol, RightCol = SubMelee:AddColumns()
-
--- Sections can be collapsible
-local KillAuraSec = LeftCol:AddSection("Kill Aura")
-local ExtraSec = RightCol:AddSection("Extra Settings", { Collapsible = true, DefaultExpanded = false })
-ExtraSec:SetCollapsed(true) -- Change collapse state at runtime
-```
-
----
-
-## ⚙️ Elements & Methods API
-
-All UI elements returned by the library expose specific methods to modify them programmatically at runtime.  
-**Global Visibility:** Every element has a `:SetVisible(boolean)` method.
-
-### Toggles
-```lua
-local Tgl = Section:AddToggle("Aimbot", { Title = "Aimbot", Tooltip = "Auto aim.", Default = false })
-
-Tgl:AddKeybind("AimbotBind", { Default = Enum.KeyCode.E })
+-- Add inline colorpicker:
 Tgl:AddColorpicker("AimbotColor", { Default = Color3.fromRGB(255, 0, 0) })
-
-Tgl:SetValue(true)
-Tgl:OnChanged(function(val) print(val) end)
 ```
 
-### Sliders
+### Slider
+
 ```lua
-local Sld = Section:AddSlider("FOV", { Title = "FOV", Min = 10, Max = 500, Default = 150, Suffix = " px" })
+local Sld = AimSection:AddSlider("FOV", {
+    Title    = "FOV Circle",
+    Min      = 10,
+    Max      = 500,
+    Default  = 150,
+    Suffix   = " px",
+    Callback = function(value) print("FOV:", value) end
+})
 
 Sld:SetValue(200)
-Sld:OnChanged(function(val) print(val) end)
+Sld:OnChanged(function(v) print(v) end)
 ```
 
-### Dropdowns
-```lua
-local Drop = Section:AddDropdown("TargetMode", { Title = "Target Mode", Values = { "Head", "Torso" }, Default = "Head", Multi = false })
+### Dropdown
 
-Drop:Refresh({ "Head", "Torso", "Random" }) -- Update available options
-Drop:SetValue("Random")                     -- Update selection
-Drop:SetValues({ "Head", "Torso" })         -- Update multiple selections (if Multi = true)
-Drop:OnChanged(function(val) print(val) end)
+```lua
+local Drop = AimSection:AddDropdown("TargetPart", {
+    Title    = "Target Part",
+    Values   = { "Head", "Torso", "Root" },
+    Default  = "Head",
+    Multi    = false,       -- true = multi-select
+    Callback = function(value) print("Target:", value) end
+})
+
+Drop:Refresh({ "Head", "Torso", "Random" }) -- Replace options
+Drop:SetValue("Torso")                       -- Set selection
+Drop:OnChanged(function(v) print(v) end)
 ```
 
-### Inputs (Text Boxes)
-```lua
-local Inp = Section:AddInput("CustomTag", { Title = "Chat Tag", Default = "[VIP]" })
+### Button
 
-Inp:SetValue("[ADMIN]")
-Inp:OnChanged(function(text) print(text) end)
+```lua
+local Btn = AimSection:AddButton({
+    Title       = "Execute Script",
+    Description = "Runs the main loop",
+    Icon        = "solar/play-bold",
+    Callback    = function()
+        print("Button clicked!")
+    end
+})
+
+Btn:SetTitle("Running...")
+Btn:SetDesc("Executing now...")
 ```
 
-### Keybinds & Colorpickers (Standalone)
+### Input (Text Box)
+
 ```lua
-local Key = Section:AddKeybind("Panic", { Title = "Panic", Default = Enum.KeyCode.P })
-Key:SetValue(Enum.KeyCode.L)
+local Inp = AimSection:AddInput("PlayerName", {
+    Title       = "Target Name",
+    Default     = "",
+    Placeholder = "Enter player name",
+    Callback    = function(text)
+        print("Input:", text)
+    end
+})
+
+Inp:SetValue("Player1")
+Inp:OnChanged(function(t) print(t) end)
+```
+
+### Keybind (Standalone)
+
+```lua
+local Key = AimSection:AddKeybind("PanicKey", {
+    Title    = "Panic Key",
+    Default  = Enum.KeyCode.Delete,
+    Callback = function(key) print("Key changed to:", key) end
+})
+
+Key:SetValue(Enum.KeyCode.End)
 Key:OnChanged(function(k) print(k) end)
+```
 
-local CP = Section:AddColorpicker("ESPCol", { Title = "Color", Default = Color3.fromRGB(0, 255, 170) })
-CP:SetValue(Color3.fromRGB(255, 0, 0))
-CP:SetValueRGB(Color3.new(1, 0, 0), 0.5) -- Color with transparency
+### Colorpicker (Standalone)
+
+```lua
+local CP = AimSection:AddColorpicker("ESPColor", {
+    Title    = "ESP Color",
+    Default  = Color3.fromRGB(255, 0, 0),
+    Callback = function(color) print(color) end
+})
+
+CP:SetValue(Color3.fromRGB(0, 255, 170))
+CP:SetValueRGB(Color3.new(1, 0, 0), 0.5)  -- with transparency
 CP:OnChanged(function(c) print(c) end)
 ```
 
-### Progress Bars
+### Label & Live Stat
+
 ```lua
-local Prog = Section:AddProgressBar("FarmingProg", { Title = "Farming Progress" })
+local Lbl = AimSection:AddLabel("StatusLbl", "Status: Active")
+Lbl:SetText("Status: Idle")
 
-Prog:SetProgress(50)      -- Set fill to 50%
-Prog:SetValue(50)         -- Alias to SetProgress
-Prog:SetTitle("Mining...")-- Update the label
-```
-
-### Advanced Text & Formatting Elements
-```lua
-local Lbl = Section:AddLabel("InfoLabel", "Status: Active")
-Lbl:SetText("New Status")
-
-local Stat = Section:AddLiveStat("GoldCoins", { 
-    Title = "Total Gold", 
+local Stat = AimSection:AddLiveStat("GoldDisplay", {
+    Title   = "Total Gold",
     Default = "0",
-    Icon = "solar/wad-of-money-bold",  -- Any icon name
-    Color = Color3.fromRGB(255, 215, 0) -- Neon glow color
+    Icon    = "solar/wad-of-money-bold",
+    Color   = Color3.fromRGB(255, 215, 0)
 })
--- Update the glowing stat in real-time, optionally changing its color:
-Stat:SetText("1500", Color3.fromRGB(0, 255, 100)) 
-
-local Btn = Section:AddButton({ Title = "Execute", Description = "Runs script", Icon = "solar/play-bold" })
-Btn:SetTitle("Running")
-Btn:SetDesc("Executing now...")
-
-local Para = Section:AddParagraph({ Title = "Note", Content = "Read carefully." })
-Para:SetTitle("Updated Note")
-Para:SetContent("New content")
-
-Section:AddSpace(10)
-Section:AddDivider()
-Section:AddSeparator("MEDIA SECTION")
-Section:AddAlert({ Title = "Warning", Content = "Risk!", Type = "Warning" })
+Stat:SetText("1500")
+Stat:SetText("2000", Color3.fromRGB(0, 255, 100)) -- with new color
 ```
 
-### Media Elements
+### Paragraph
+
 ```lua
-local Img = Section:AddImage("Logo", { Size = UDim2.fromOffset(200, 100), Image = "rbxassetid://10849890695" })
-Img:SetImage("rbxassetid://new_id")
+local Para = AimSection:AddParagraph({
+    Title   = "Notice",
+    Content = "This feature requires the game to be in a public server."
+})
+Para:SetTitle("Updated Notice")
+Para:SetContent("New content here.")
+```
 
-local Audio = Section:AddAudio("Music", { Title = "BGM", SoundId = 1843431602, Volume = 0.5, Looped = true })
-Audio:Play()
-Audio:Stop()
-Audio:SetVolume(1.0)
-Audio:SetSoundId(123456789)
+### Progress Bar
 
-local Video = Section:AddVideo("Trailer", { Title = "Showcase", Video = 5608688234, AutoPlay = true, Looped = true, Height = 150 })
-Video:Play()
-Video:Pause()
-Video:SetVolume(0.5)
+```lua
+local Prog = AimSection:AddProgressBar("FarmProgress", {
+    Title = "Farm Progress"
+})
+Prog:SetProgress(0.75)  -- 0.0 to 1.0
+Prog:SetTitle("Almost done...")
+```
 
-local Code = Section:AddCode("ScriptBox", { Title = "Copy Me", Code = "print('Hello')" })
-Code:SetCode("print('Goodbye')")
+### Alert, Divider, Space, Separator
+
+```lua
+AimSection:AddAlert({
+    Title   = "Warning",
+    Content = "This may cause lag.",
+    Type    = "Warning"  -- "Info", "Success", "Error", "Warning"
+})
+
+AimSection:AddDivider()
+AimSection:AddSpace(10)          -- pixel gap
+AimSection:AddSeparator("──── SECTION LABEL ────")
 ```
 
 ---
 
-## 🎮 3D Viewport Element
+## 🎨 Themes (25+ Built-in)
 
-`Section:AddViewport` — A premium embedded 3D viewer inside any section. Supports loading player characters, workspace models, or any custom Model/BasePart. Comes with an interactive orbital camera (drag to rotate, scroll to zoom), auto-spin, and a built-in toolbar.
+**Available:** `Dark`, `Light`, `Ocean`, `Amethyst`, `Neon`, `BloodRed`, `Midnight`, `NeonCyber`, `ArcticFrost`, `CottonCandy`, `Orange`, `Cyanic`, `AmberGlow`, `DeepViolet`, `Charcoal`, `PearlWhite`, `Galaxy`, `AMOLED`, `AshGray`, `NeonPurple`, `RoyalBlue`, `DeepOcean`, `MidnightBlue`, `CosmicViolet`, `Sakura` 🌸, `RGB` (chroma)
 
-### Configuration Options
 ```lua
-local VP = Section:AddViewport("MyViewer", {
-    Title          = "Character Preview", -- Header label above the viewer
-    Height         = 220,                 -- Height of the viewer in pixels
-    CameraDistance = 7,                   -- Initial camera distance from model
-    CameraAngleY   = 20,                  -- Initial vertical camera elevation (degrees)
-    AutoSpin       = true,                -- Start spinning the model on load
-    SpinSpeed      = 25,                  -- Auto-spin speed in degrees per second
+-- Switch theme at runtime:
+Aurora:SetTheme("Ocean")
+
+-- Create custom theme (missing keys fall back to Dark):
+Aurora:CreateTheme("MyTheme", {
+    Background = Color3.fromRGB(10, 10, 14),
+    Accent     = Color3.fromRGB(0, 200, 255),
+    Text       = Color3.fromRGB(240, 240, 255),
+    Border     = Color3.fromRGB(40, 40, 55),
 })
 ```
 
-### Loading Models
+---
+
+## 🔔 Notifications
+
 ```lua
--- 1. Show a player's character (Live Tracking)
--- Automatically tracks the player's character, updating the 3D model every time they respawn!
--- Fully supports R15/R6 characters without missing invisible parts.
-VP:SetPlayer("local")                      -- Your own character
-VP:SetPlayer("PlayerName")                 -- Any player in the server by name
-VP:SetPlayer(game.Players.LocalPlayer)     -- By Player object
+-- Basic:
+Aurora:Notify({ Title = "Done!", Content = "Script loaded.", Type = "Success", Duration = 5 })
 
--- 2. Load any model from the Workspace by name (searches recursively)
-VP:SetWorkspaceModel("Tree")
-VP:SetWorkspaceModel("BossNPC")
-
--- 3. Load any Model or BasePart instance directly
-local part = Instance.new("Part")
-part.Size = Vector3.new(5, 5, 5)
-VP:SetModel(part)
-```
-
-### Runtime Control
-```lua
-VP:Spin(45)          -- Start spinning at 45 degrees/sec (0 = stop)
-VP:SetCamera(10, 30) -- Change camera distance and elevation angle at runtime
-VP:SetTitle("New Title")
-VP:Clear()           -- Remove the current model and show placeholder
-VP:SetVisible(false) -- Hide/show the entire element
-```
-
-### Full Example — Character Viewer with Controls
-```lua
-local SecViewer = LeftCol:AddSection("Player Inspector")
-
-local PlayerViewport = SecViewer:AddViewport("PlayerVP", {
-    Title = "Live Character", Height = 220, AutoSpin = true, SpinSpeed = 22
+-- With buttons:
+Aurora:Notify({
+    Title = "Confirm", Content = "Continue?", Type = "Warning", Duration = 0,
+    Buttons = {
+        { Title = "Yes",    Callback = function() print("confirmed") end },
+        { Title = "Cancel", Callback = function() end },
+    }
 })
-PlayerViewport:SetPlayer("local")
 
-SecViewer:AddDropdown("InspectTarget", {
-    Title = "Select Player",
-    Values = { "[Local]", "PlayerA", "PlayerB" },
-    Default = "[Local]",
-    Callback = function(name)
-        if name == "[Local]" then
-            PlayerViewport:SetPlayer("local")
-        else
-            PlayerViewport:SetPlayer(name)
-        end
+-- Dynamic progress:
+local notif = Aurora:Notify({ Title = "Loading", Content = "Please wait...", Duration = 0 })
+notif:SetProgress(0.5)
+notif:Update({ Title = "Done!", Content = "Finished!", Type = "Success", Duration = 3 })
+notif:Close()
+```
+
+---
+
+## 💬 Modal Dialogs
+
+```lua
+Window:Dialog({
+    Title   = "Confirmation",
+    Content = "Are you sure you want to reset all settings?",
+    Buttons = {
+        { Title = "Cancel" },
+        { Title = "Reset", Callback = function() resetAllSettings() end },
+    }
+})
+```
+
+---
+
+## 💾 SaveManager
+
+```lua
+Aurora.SaveManager:SetLibrary(Aurora)
+Aurora.SaveManager:SetFolder("MyScript/Config")
+Aurora.SaveManager:IgnoreIndexes({ "ThemeSelector" })
+
+-- Build a config UI section automatically:
+Aurora.SaveManager:BuildConfigSection(SettingsSection)
+
+-- Auto-load last saved config:
+Aurora.SaveManager:LoadAutoloadConfig()
+
+-- Cloud config sharing:
+Aurora.SaveManager:SaveCloud("MyConfig", "DyxDev", "Best settings", "BoogaBooga")
+Aurora.SaveManager:LoadCloud("MyConfig")
+```
+
+---
+
+## 🔑 Key System
+
+```lua
+local verified = false
+Aurora.KeySystem.new({
+    Title    = "License Check",
+    SubTitle = "Enter your key to continue",
+    Note     = "Get a key at discord.gg/example",
+    Keys     = { "FREE-KEY-2026", "VIP-KEY-ABC" },
+    KeyLink  = "https://discord.gg/example",
+    SaveKey  = true,
+    FileName = "MyScript_Key.txt",
+    OnSuccess = function()
+        verified = true
     end
 })
-
-SecViewer:AddSlider("VPDistance", {
-    Title = "Zoom", Min = 3, Max = 20, Default = 7,
-    Callback = function(v) PlayerViewport:SetCamera(v, nil) end
-})
-
-SecViewer:AddToggle("VPSpin", {
-    Title = "Auto-Spin", Default = true,
-    Callback = function(v) PlayerViewport:Spin(v and 22 or 0) end
-})
+repeat task.wait(0.1) until verified
 ```
-
-> **Toolbar Buttons** built into every viewport:
-> - 🔄 **Reset Camera** — Restores default distance and angle
-> - ↺ **Toggle Spin** — Starts/stops auto-rotation
-> - ✕ **Clear** — Removes the loaded model
 
 ---
 
 ## 🌐 Global Options API
 
-Retrieve any UI element's active value dynamically from anywhere in your script using its registered ID:
+Access any element's current value from anywhere in your script:
 
 ```lua
-local isAimbotEnabled = Aurora.Options.Aimbot.Value
-local currentFOV      = Aurora.Options.FOV.Value
-local currentFilters  = Aurora.Options.ESPFilters.Value
-local customTagText   = Aurora.Options.CustomTag.Value
+local enabled = Aurora.Options.AimbotEnabled.Value
+local fov     = Aurora.Options.FOV.Value
+local target  = Aurora.Options.TargetPart.Value
+local color   = Aurora.Options.ESPColor.Value
+local key     = Aurora.Options.PanicKey.Value
 ```
 
 ---
 
-## 🛠️ Complete Integration Example
+## 📊 HUD & Overlays
 
-To view a fully constructed script showing how all of these components work together, please refer to the `AuroraExample.lua` file included in the library directory. It features a complete mock setup for a Booga Booga style script, plus the full **3D Viewers** tab demonstrating all `AddViewport` features.
+```lua
+-- Watermark:
+local WM = Aurora:Watermark({ Enabled = true, Title = "My Script v1.0" })
+WM:SetTitle("My Script | FPS: 60")
+WM:Destroy()
+
+-- Keybind tracker:
+local KB = Aurora:KeybindList({ Enabled = true })
+KB:Destroy()
+
+-- Custom HUD panel:
+local HUD = Aurora:CreateHUD({ Title = "Stats", Width = 220 })
+HUD:SetItem("Status", "Running")
+HUD:SetItem("FPS",    tostring(math.floor(1/game:GetService("RunService").RenderStepped:Wait())))
+HUD:Toggle(true)
+```
 
 ---
 
-Made with ❤️ by **DrakarDev**
+## 🖼️ Media Elements
+
+```lua
+-- Image:
+local Img = Section:AddImage("Banner", { Size = UDim2.fromOffset(200, 80), Image = "rbxassetid://12345" })
+Img:SetImage("rbxassetid://67890")
+
+-- Audio:
+local Audio = Section:AddAudio("BGM", { SoundId = 1843431602, Volume = 0.5, Looped = true })
+Audio:Play(); Audio:Stop(); Audio:SetVolume(0.8)
+
+-- Video:
+local Vid = Section:AddVideo("Trailer", { Video = 5608688234, AutoPlay = true, Height = 150 })
+Vid:Play(); Vid:Pause()
+
+-- Code box (copyable):
+local Code = Section:AddCode("Example", { Title = "Sample Code", Code = "print('Hello')" })
+Code:SetCode("print('World')")
+```
+
+---
+
+## 🎮 3D Viewport
+
+```lua
+local VP = Section:AddViewport("Preview", {
+    Title = "Character Preview", Height = 220,
+    AutoSpin = true, SpinSpeed = 25, CameraDistance = 7,
+})
+VP:SetPlayer("local")          -- Live character tracking
+VP:SetPlayer("PlayerName")     -- Another player
+VP:SetWorkspaceModel("Tree")   -- Any workspace model
+VP:Spin(30)                    -- Spin at 30°/sec (0 = stop)
+VP:SetCamera(10, 30)           -- Distance and elevation
+VP:Clear()                     -- Remove model
+```
+
+---
+
+## 📝 Complete Minimal Example
+
+```lua
+local Aurora = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/DrakarDev/XAuroraLibX/refs/heads/main/AuroraLibrary.lua"
+))()
+
+local Window = Aurora:CreateWindow({
+    Title       = "My Script",
+    SubTitle    = "By DyxDev",
+    Theme       = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl,
+})
+
+local Cat      = Window:AddCategory("Features", "solar/star-bold")
+local MainTab  = Cat:AddTab({ Title = "Main", Icon = "solar/home-bold" })
+local MainSec  = MainTab:AddSection("General")
+
+-- Toggle with keybind
+local TglAim = MainSec:AddToggle("AimbotOn", {
+    Title    = "Aimbot",
+    Default  = false,
+    Callback = function(v) print("Aimbot:", v) end,
+})
+TglAim:AddKeybind("AimbotKey", { Default = Enum.KeyCode.E })
+
+-- Slider
+MainSec:AddSlider("AimFOV", {
+    Title    = "FOV",
+    Min      = 10, Max = 500, Default = 150,
+    Suffix   = " px",
+    Callback = function(v) print("FOV:", v) end,
+})
+
+-- Dropdown
+MainSec:AddDropdown("AimPart", {
+    Title    = "Target Part",
+    Values   = { "Head", "Torso" },
+    Default  = "Head",
+    Callback = function(v) print("Part:", v) end,
+})
+
+-- Button
+MainSec:AddButton({
+    Title    = "Execute",
+    Callback = function() Aurora:Notify({ Title = "Done!", Type = "Success", Duration = 3 }) end,
+})
+
+Aurora:Notify({ Title = "Loaded", Content = "My Script is ready!", Type = "Success", Duration = 4 })
+```
+
+---
+
+> For a full showcase of all features, see `AuroraExample.lua`.
+
+Made with ❤️ by **DrakarDev** · Design inspired by Apple HIG
