@@ -5164,14 +5164,14 @@ function Section:AddChangelog(id, data)
     make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(12), Parent = f })
     
     local badgeColors = {
-        Added    = Color3.fromRGB(46, 204, 113),
-        Añadido  = Color3.fromRGB(46, 204, 113),
-        Fixed    = Color3.fromRGB(231, 76, 60),
-        BugFix   = Color3.fromRGB(231, 76, 60),
-        Arreglo  = Color3.fromRGB(231, 76, 60),
-        Improved = Color3.fromRGB(52, 152, 219),
-        Mejora   = Color3.fromRGB(52, 152, 219),
-        Removed  = Color3.fromRGB(230, 126, 34)
+        ["Added"]    = Color3.fromRGB(46, 204, 113),
+        ["Añadido"]  = Color3.fromRGB(46, 204, 113),
+        ["Fixed"]    = Color3.fromRGB(231, 76, 60),
+        ["BugFix"]   = Color3.fromRGB(231, 76, 60),
+        ["Arreglo"]  = Color3.fromRGB(231, 76, 60),
+        ["Improved"] = Color3.fromRGB(52, 152, 219),
+        ["Mejora"]   = Color3.fromRGB(52, 152, 219),
+        ["Removed"]  = Color3.fromRGB(230, 126, 34)
     }
 
     local numVersions = #data
