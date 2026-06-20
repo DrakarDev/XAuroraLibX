@@ -257,6 +257,21 @@ local function addTooltip(frame, text)
     end)
 end
 
+local activeAcrylics = {}
+local function updateDofState()
+    local dof = game:GetService("Lighting"):FindFirstChild("AuroraBlur")
+    if not dof then return end
+    
+    local anyVisible = false
+    for part, _ in pairs(activeAcrylics) do
+        if part.Parent and part.Transparency < 1 then
+            anyVisible = true
+            break
+        end
+    end
+    dof.Enabled = anyVisible
+end
+
 local function createAcrylic(frame)
     local camera = workspace.CurrentCamera
     if not camera then return nil end
@@ -268,7 +283,7 @@ local function createAcrylic(frame)
         dof.FarIntensity = 0
         dof.InFocusRadius = 0.1
         dof.NearIntensity = 1
-        dof.Enabled = true
+        dof.Enabled = false
         dof.Parent = game:GetService("Lighting")
     end
     
@@ -281,7 +296,7 @@ local function createAcrylic(frame)
     part.CanCollide = false
     part.Locked = true
     part.CastShadow = false
-    part.Transparency = 0.98
+    part.Transparency = 1
     
     local mesh = Instance.new("SpecialMesh")
     mesh.MeshType = Enum.MeshType.Brick
@@ -289,13 +304,12 @@ local function createAcrylic(frame)
     mesh.Parent = part
     
     part.Parent = camera
+    activeAcrylics[part] = true
     
     local connections = {}
     local distance = 0.001
     
     local screenGui = frame:FindFirstAncestorOfClass("ScreenGui")
-    
-    local GuiService = game:GetService("GuiService")
     
     local function projectPoint(screenPos, dist)
         local ray = camera:ScreenPointToRay(screenPos.X, screenPos.Y)
@@ -314,13 +328,17 @@ local function createAcrylic(frame)
             visible = false
         end
         
-        part.Transparency = visible and 0.98 or 1
+        local oldTrans = part.Transparency
+        local newTrans = visible and 0.98 or 1
+        part.Transparency = newTrans
+        if oldTrans ~= newTrans then
+            updateDofState()
+        end
         if not visible then return end
         
         local absSize = frame.AbsoluteSize
         local absPos = frame.AbsolutePosition
         
-        -- Dynamically resolve CornerRadius from a UICorner child
         local uiCorner = frame:FindFirstChildOfClass("UICorner")
         local radius = 16
         if uiCorner then
@@ -331,8 +349,6 @@ local function createAcrylic(frame)
             end
         end
         
-        -- Use a safer inset coefficient (0.5) to ensure the 3D part's sharp corner is completely
-        -- hidden within the rounded border of the UI.
         local inset = math.ceil(radius * 0.5)
         local topLeft = absPos + Vector2.new(inset, inset)
         local topRight = absPos + Vector2.new(absSize.X - inset, inset)
@@ -349,9 +365,24 @@ local function createAcrylic(frame)
         mesh.Scale = Vector3.new(width, height, 0.001)
     end
     
-    table.insert(connections, camera:GetPropertyChangedSignal("CFrame"):Connect(updatePosition))
-    table.insert(connections, camera:GetPropertyChangedSignal("ViewportSize"):Connect(updatePosition))
-    table.insert(connections, camera:GetPropertyChangedSignal("FieldOfView"):Connect(updatePosition))
+    local function safeUpdate()
+        local visible = frame.Visible
+        if visible and screenGui then
+            visible = screenGui.Enabled
+        end
+        if visible and frame.AbsoluteSize.X > 0 and frame.AbsoluteSize.Y > 0 then
+            updatePosition()
+        else
+            if part.Transparency ~= 1 then
+                part.Transparency = 1
+                updateDofState()
+            end
+        end
+    end
+    
+    table.insert(connections, camera:GetPropertyChangedSignal("CFrame"):Connect(safeUpdate))
+    table.insert(connections, camera:GetPropertyChangedSignal("ViewportSize"):Connect(safeUpdate))
+    table.insert(connections, camera:GetPropertyChangedSignal("FieldOfView"):Connect(safeUpdate))
     table.insert(connections, frame:GetPropertyChangedSignal("AbsolutePosition"):Connect(updatePosition))
     table.insert(connections, frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updatePosition))
     table.insert(connections, frame:GetPropertyChangedSignal("Visible"):Connect(updatePosition))
@@ -372,6 +403,8 @@ local function createAcrylic(frame)
     task.spawn(updatePosition)
     
     part.Destroying:Connect(function()
+        activeAcrylics[part] = nil
+        updateDofState()
         for _, conn in ipairs(connections) do
             pcall(function() conn:Disconnect() end)
         end
@@ -3427,10 +3460,26 @@ function SubTab:AddSection(title, cfg)
 end
 function SubTab:AddColumns()
     local c=make("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=self.ScrollContent})
+    local layout = make("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(8),Parent=c})
     local l=make("Frame",{Size=UDim2.new(0.5,-s(4),0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=c})
     make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(7),Parent=l})
-    local r=make("Frame",{Size=UDim2.new(0.5,-s(4),0,0),Position=UDim2.new(0.5,s(4),0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=c})
+    local r=make("Frame",{Size=UDim2.new(0.5,-s(4),0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=c})
     make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(7),Parent=r})
+    
+    local function upd()
+        if c.AbsoluteSize.X < s(450) then
+            layout.FillDirection = Enum.FillDirection.Vertical
+            l.Size = UDim2.new(1,0,0,0)
+            r.Size = UDim2.new(1,0,0,0)
+        else
+            layout.FillDirection = Enum.FillDirection.Horizontal
+            l.Size = UDim2.new(0.5,-s(4),0,0)
+            r.Size = UDim2.new(0.5,-s(4),0,0)
+        end
+    end
+    c:GetPropertyChangedSignal("AbsoluteSize"):Connect(upd)
+    task.spawn(upd)
+
     return setmetatable({Frame=l, _tab=self._parentTab, _subTab=self},Column), setmetatable({Frame=r, _tab=self._parentTab, _subTab=self},Column)
 end
 
@@ -3442,10 +3491,26 @@ function Tab:AddSection(title, cfg)
 end
 function Tab:AddColumns()
     local c=make("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=self.ScrollContent})
+    local layout = make("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(8),Parent=c})
     local l=make("Frame",{Size=UDim2.new(0.5,-s(4),0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=c})
     make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(7),Parent=l})
-    local r=make("Frame",{Size=UDim2.new(0.5,-s(4),0,0),Position=UDim2.new(0.5,s(4),0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=c})
+    local r=make("Frame",{Size=UDim2.new(0.5,-s(4),0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=c})
     make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(7),Parent=r})
+    
+    local function upd()
+        if c.AbsoluteSize.X < s(450) then
+            layout.FillDirection = Enum.FillDirection.Vertical
+            l.Size = UDim2.new(1,0,0,0)
+            r.Size = UDim2.new(1,0,0,0)
+        else
+            layout.FillDirection = Enum.FillDirection.Horizontal
+            l.Size = UDim2.new(0.5,-s(4),0,0)
+            r.Size = UDim2.new(0.5,-s(4),0,0)
+        end
+    end
+    c:GetPropertyChangedSignal("AbsoluteSize"):Connect(upd)
+    task.spawn(upd)
+
     return setmetatable({Frame=l, _tab=self},Column), setmetatable({Frame=r, _tab=self},Column)
 end
 
