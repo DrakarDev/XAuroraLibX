@@ -1160,6 +1160,10 @@ local function _initNotif()
     make("UIPadding", { PaddingBottom=sz(22), Parent=_nHolder })
 end
 
+local _notifQueue = {}
+local _activeNotifs = {}
+local processNotifQueue -- forward declared
+
 function Aurora:Notify(cfg)
     _initNotif()
     cfg = cfg or {}
@@ -1185,8 +1189,6 @@ function Aurora:Notify(cfg)
         end)
     end
 
-    playSound(cfg.SoundId or soundMap[typ] or 4590662762)
-
     local acrylicEnabled = cfg.Acrylic
     if acrylicEnabled == nil then
         acrylicEnabled = self.Acrylic
@@ -1195,12 +1197,13 @@ function Aurora:Notify(cfg)
         acrylicEnabled = true
     end
 
+    -- Create card without parenting it immediately
     local card = make("Frame", {
         Size=UDim2.new(1,0,0,s(4)), AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundColor3=thm.NotifBG,
         BackgroundTransparency=(acrylicEnabled and 0.45 or 0),
         BorderSizePixel=0, ClipsDescendants=true,
-        LayoutOrder=-tick(), Parent=_nHolder,
+        LayoutOrder=-tick(),
     })
     if acrylicEnabled then
         createAcrylic(card)
@@ -1298,7 +1301,10 @@ function Aurora:Notify(cfg)
                 Size = UDim2.new(1, 0, 0, 0)
             }, 0.25)
         end)
-        task.delay(0.26, function() pcall(function() card:Destroy() end) end)
+        task.delay(0.26, function() 
+            pcall(function() card:Destroy() end)
+            processNotifQueue()
+        end)
     end
 
     local function addHoverScale(btn)
@@ -1481,13 +1487,6 @@ function Aurora:Notify(cfg)
     make("UICorner", { CornerRadius=sz(4), Parent=pTrack })
     make("UICorner", { CornerRadius=sz(4), Parent=pFill })
 
-    local notifObj = { Card = card, Close = closeNotif }
-    table.insert(_activeNotifs, notifObj)
-    if #_activeNotifs > 5 then
-        local oldest = _activeNotifs[1]
-        if oldest then oldest.Close() end
-    end
-
     closeBtn.MouseButton1Click:Connect(closeNotif)
     copyBtn.MouseButton1Click:Connect(function()
         local t = tostring(titleLbl.Text or "")
@@ -1537,9 +1536,6 @@ function Aurora:Notify(cfg)
         pcall(function() endedConn:Disconnect() end)
     end)
 
-    card.Position = UDim2.new(1,s(320),0,0); card.BackgroundTransparency=1
-    tw(card, { Position=UDim2.new(0,0,0,0), BackgroundTransparency=(acrylicEnabled and 0.45 or 0) }, 0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-
     -- Timer & Progress Bar State
     local autoCloseThread
     local function startAutoClose(customDur)
@@ -1558,8 +1554,6 @@ function Aurora:Notify(cfg)
             pFill.Size = UDim2.new(0, 0, 1, 0)
         end
     end
-
-    startAutoClose(dur)
 
     -- Dynamic update helpers
     local function updateText(lbl, newText)
@@ -1665,7 +1659,33 @@ function Aurora:Notify(cfg)
         closeNotif()
     end
 
+    -- Wrapped notification logic to execute only when processed by the queue
+    local notifObj = {
+        Card = card,
+        Show = function()
+            playSound(cfg.SoundId or soundMap[typ] or 4590662762)
+            card.Parent = _nHolder
+            card.Position = UDim2.new(1, s(320), 0, 0)
+            card.BackgroundTransparency = 1
+            tw(card, { Position=UDim2.new(0,0,0,0), BackgroundTransparency=(acrylicEnabled and 0.45 or 0) }, 0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            startAutoClose(dur)
+        end
+    }
+
+    table.insert(_notifQueue, notifObj)
+    processNotifQueue()
+
     return controller
+end
+
+function processNotifQueue()
+    if #_activeNotifs >= 3 then return end
+    if #_notifQueue == 0 then return end
+    
+    local nextNotif = table.remove(_notifQueue, 1)
+    table.insert(_activeNotifs, nextNotif)
+    
+    pcall(nextNotif.Show)
 end
 
 -- ================================================================================
@@ -2296,13 +2316,15 @@ function Section:AddToggle(id, cfg)
         local binding = false
 
         local kbBtn = make("TextButton", {
-            Size=ss(55,20), BackgroundColor3=thm.InputBG,
+            Size=UDim2.new(0, s(55), 0, s(20)), AutomaticSize=Enum.AutomaticSize.X,
+            BackgroundColor3=thm.InputBG,
             Text=defaultKey==Enum.KeyCode.None and "None" or defaultKey.Name,
-            TextColor3=thm.SubText, TextSize=fs(16), Font=Enum.Font.GothamBold,
+            TextColor3=thm.SubText, TextSize=fs(11), Font=Enum.Font.GothamBold,
             LayoutOrder=5, ZIndex=10, Parent=rightControls,
         })
         make("UICorner", { CornerRadius=sz(8), Parent=kbBtn })
         local kbStroke = make("UIStroke", { Color=thm.Border, Thickness=1, Parent=kbBtn })
+        make("UIPadding", { PaddingLeft=sz(6), PaddingRight=sz(6), Parent=kbBtn })
 
         local mobileBtn, mobileStroke, mobileLbl, mobileDot = _createMobileKeybind(kbCfg.Title or cfg.Title or title or "Toggle", function()
             set(not obj.Value)
@@ -2349,6 +2371,21 @@ function Section:AddToggle(id, cfg)
                 else
                     kbBtn.Text = "None"
                 end
+            elseif type(key) == "table" and key.KeyCode then
+                local text = ""
+                if key.Ctrl then text = text .. "Ctrl+" end
+                if key.Shift then text = text .. "Shift+" end
+                if key.Alt then text = text .. "Alt+" end
+                if typeof(key.KeyCode) == "EnumItem" then
+                    if key.KeyCode.EnumType == Enum.KeyCode then
+                        text = text .. (key.KeyCode == Enum.KeyCode.None and "None" or key.KeyCode.Name)
+                    elseif key.KeyCode.EnumType == Enum.UserInputType then
+                        text = text .. key.KeyCode.Name:gsub("MouseButton", "MB")
+                    end
+                else
+                    text = text .. "None"
+                end
+                kbBtn.Text = text
             else
                 kbBtn.Text = "None"
             end
@@ -2356,24 +2393,68 @@ function Section:AddToggle(id, cfg)
             if Aurora.RefreshKeybindList then task.defer(Aurora.RefreshKeybindList) end
         end
 
+        local function isModifierKey(keycode)
+            return keycode == Enum.KeyCode.LeftControl or keycode == Enum.KeyCode.RightControl
+                or keycode == Enum.KeyCode.LeftShift or keycode == Enum.KeyCode.RightShift
+                or keycode == Enum.KeyCode.LeftAlt or keycode == Enum.KeyCode.RightAlt
+        end
+
         kbBtn.MouseButton1Click:Connect(function()
             if binding then return end
             binding=true; kbBtn.Text="..."; kbBtn.TextColor3=thm.Accent
             task.spawn(function()
                 task.wait()
-                local conn
-                conn=UserInputService.InputBegan:Connect(function(input)
-                    if input.UserInputType==Enum.UserInputType.Keyboard then
-                        conn:Disconnect(); binding=false
-                        local k=input.KeyCode
-                        updateKey(k==Enum.KeyCode.Escape and Enum.KeyCode.None or k)
-                        kbBtn.TextColor3=thm.SubText
+                local conn, connEnd
+                local function clean()
+                    pcall(function() conn:Disconnect() end)
+                    pcall(function() connEnd:Disconnect() end)
+                    binding=false
+                    kbBtn.TextColor3=thm.SubText
+                end
+                conn = UserInputService.InputBegan:Connect(function(input)
+                    local key = input.KeyCode
+                    local utype = input.UserInputType
+                    if utype == Enum.UserInputType.Keyboard then
+                        if isModifierKey(key) then
+                            local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+                            local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
+                            local alt = UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
+                            kbBtn.Text = (ctrl and "Ctrl+" or "") .. (shift and "Shift+" or "") .. (alt and "Alt+" or "") .. "..."
+                            return
+                        end
+                        clean()
+                        if key == Enum.KeyCode.Escape then
+                            updateKey(Enum.KeyCode.None)
+                        else
+                            local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+                            local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
+                            local alt = UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
+                            if ctrl or shift or alt then
+                                updateKey({ KeyCode = key, Ctrl = ctrl, Shift = shift, Alt = alt })
+                            else
+                                updateKey(key)
+                            end
+                        end
                         if kbCfg.Callback then pcall(kbCfg.Callback, kbObj.Value) end
-                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton3 then
-                        conn:Disconnect(); binding=false
-                        updateKey(input.UserInputType)
-                        kbBtn.TextColor3=thm.SubText
+                    elseif utype == Enum.UserInputType.MouseButton1 or utype == Enum.UserInputType.MouseButton2 or utype == Enum.UserInputType.MouseButton3 then
+                        clean()
+                        local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+                        local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
+                        local alt = UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
+                        if ctrl or shift or alt then
+                            updateKey({ KeyCode = utype, Ctrl = ctrl, Shift = shift, Alt = alt })
+                        else
+                            updateKey(utype)
+                        end
                         if kbCfg.Callback then pcall(kbCfg.Callback, kbObj.Value) end
+                    end
+                end)
+                connEnd = UserInputService.InputEnded:Connect(function(input)
+                    if binding and input.UserInputType == Enum.UserInputType.Keyboard and isModifierKey(input.KeyCode) then
+                        local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+                        local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
+                        local alt = UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
+                        kbBtn.Text = (ctrl and "Ctrl+" or "") .. (shift and "Shift+" or "") .. (alt and "Alt+" or "") .. "..."
                     end
                 end)
             end)
@@ -2381,8 +2462,21 @@ function Section:AddToggle(id, cfg)
 
         local inlineBegan = UserInputService.InputBegan:Connect(function(input,processed)
             if not processed and not binding then
-                if input.KeyCode==kbObj.Value or input.UserInputType==kbObj.Value then
-                    set(not obj.Value)
+                local target = kbObj.Value
+                if typeof(target) == "EnumItem" then
+                    if input.KeyCode==target or input.UserInputType==target then
+                        set(not obj.Value)
+                    end
+                elseif type(target) == "table" and target.KeyCode then
+                    local mainMatch = (input.KeyCode == target.KeyCode or input.UserInputType == target.KeyCode)
+                    if mainMatch then
+                        local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+                        local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
+                        local alt = UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
+                        if (ctrl == not not target.Ctrl) and (shift == not not target.Shift) and (alt == not not target.Alt) then
+                            set(not obj.Value)
+                        end
+                    end
                 end
             end
         end)
@@ -7303,6 +7397,375 @@ function Section:AddProgressBar(id, cfg)
     addVisibilityAPI(obj, f)
     Aurora.Options[id] = obj
     return obj
+end
+
+function Aurora:CreateThemeEditor()
+    if _G.AuroraThemeCustomizerGui then
+        _G.AuroraThemeCustomizerGui.Enabled = not _G.AuroraThemeCustomizerGui.Enabled
+        return
+    end
+
+    local thm = self.Theme or self.Themes.Dark
+    local keyGui = make("ScreenGui", { Name = "AuroraThemeEditor", ResetOnSpawn = false, DisplayOrder = 99996 })
+    safeParent(keyGui)
+    _G.AuroraThemeCustomizerGui = keyGui
+
+    local mainFrame = make("Frame", {
+        Size = UDim2.fromOffset(s(340), s(450)),
+        Position = UDim2.new(0.5, -s(170), 0.5, -s(225)),
+        BackgroundColor3 = thm.Background,
+        BackgroundTransparency = 0.05,
+        Parent = keyGui
+    })
+    createAcrylic(mainFrame)
+    make("UICorner", { CornerRadius = sz(16), Parent = mainFrame })
+    local mainStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = mainFrame })
+
+    -- Dragging
+    local dragInput, dragStart, startPos
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragStart = nil
+                end
+            end)
+        end
+    end)
+    mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    local changedConn = UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragStart then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    keyGui.Destroying:Connect(function()
+        pcall(function() changedConn:Disconnect() end)
+        _G.AuroraThemeCustomizerGui = nil
+    end)
+
+    -- Header Title
+    local titleLbl = make("TextLabel", {
+        Size = UDim2.new(1, -s(40), 0, s(32)),
+        Position = UDim2.new(0, s(16), 0, s(8)),
+        BackgroundTransparency = 1,
+        Text = "Theme Customizer",
+        TextColor3 = thm.Text,
+        TextSize = fs(15),
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = mainFrame
+    })
+
+    -- Close Button
+    local closeBtn = make("TextButton", {
+        Size = ss(16, 16),
+        Position = UDim2.new(1, -s(26), 0, s(16)),
+        BackgroundTransparency = 1,
+        Text = "",
+        Parent = mainFrame
+    })
+    local closeIco = make("ImageLabel", {
+        Size = ss(10, 10),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Parent = closeBtn
+    })
+    applyIcon(closeIco, "solar/close-linear", thm.SubText)
+    closeBtn.MouseButton1Click:Connect(function() keyGui:Destroy() end)
+
+    -- Divider
+    make("Frame", {
+        Size = UDim2.new(1, -s(32), 0, 1),
+        Position = UDim2.new(0, s(16), 0, s(44)),
+        BackgroundColor3 = thm.Border,
+        BorderSizePixel = 0,
+        Parent = mainFrame
+    })
+
+    -- List container
+    local scroll = make("ScrollingFrame", {
+        Size = UDim2.new(1, -s(32), 1, -s(104)),
+        Position = UDim2.new(0, s(16), 0, s(48)),
+        BackgroundTransparency = 1,
+        ScrollBarThickness = s(3),
+        ScrollBarImageColor3 = thm.Scrollbar,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Parent = mainFrame
+    })
+    local listLayout = make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(8), Parent = scroll })
+    listLayout.Changed:Connect(function()
+        scroll.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + s(10))
+    end)
+
+    -- Define properties to edit
+    local colorKeys = {
+        { Key = "Accent", Title = "Accent Color" },
+        { Key = "Background", Title = "Background Color" },
+        { Key = "Sidebar", Title = "Sidebar Color" },
+        { Key = "TopBar", Title = "Topbar Color" },
+        { Key = "Element", Title = "Element Base" },
+        { Key = "ElementHover", Title = "Element Hover" },
+        { Key = "Text", Title = "Text Main" },
+        { Key = "SubText", Title = "Text Secondary" },
+        { Key = "Border", Title = "Border Color" },
+        { Key = "ToggleOn", Title = "Toggle Switch On" },
+        { Key = "SliderFill", Title = "Slider Active Fill" },
+        { Key = "InputBG", Title = "Input Background" }
+    }
+
+    for _, item in ipairs(colorKeys) do
+        local key = item.Key
+        local row = make("Frame", {
+            Size = UDim2.new(1, 0, 0, s(34)),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundColor3 = thm.Element,
+            BackgroundTransparency = 0.5,
+            Parent = scroll
+        })
+        make("UICorner", { CornerRadius = sz(8), Parent = row })
+        make("UIPadding", { PaddingTop = sz(6), PaddingBottom = sz(6), PaddingLeft = sz(10), PaddingRight = sz(10), Parent = row })
+        
+        local headerRow = make("Frame", {
+            Size = UDim2.new(1, 0, 0, s(22)),
+            BackgroundTransparency = 1,
+            Parent = row
+        })
+        
+        make("TextLabel", {
+            Size = UDim2.new(0.6, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = item.Title,
+            TextColor3 = thm.Text,
+            TextSize = fs(12),
+            Font = Enum.Font.GothamMedium,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = headerRow
+        })
+
+        local colDisp = make("Frame", {
+            Size = ss(30, 16),
+            AnchorPoint = Vector2.new(1, 0.5),
+            Position = UDim2.new(1, 0, 0.5, 0),
+            BackgroundColor3 = self.Theme[key],
+            Parent = headerRow
+        })
+        make("UICorner", { CornerRadius = sz(4), Parent = colDisp })
+        local stroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = colDisp })
+
+        local trigger = make("TextButton", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = "",
+            Parent = colDisp
+        })
+
+        local cpObj = { Value = self.Theme[key] }
+        local cpCfg = {
+            Callback = function(newColor)
+                self.Theme[key] = newColor
+                self:UpdateTheme()
+            end
+        }
+        local cpPanel = createColorpickerPanel(row, cpObj, cpCfg, colDisp)
+        local cpExpanded = false
+
+        trigger.MouseButton1Click:Connect(function()
+            cpExpanded = not cpExpanded
+            tw(cpPanel, { Size = UDim2.new(1, 0, 0, cpExpanded and s(148) or 0) }, 0.22)
+        end)
+    end
+
+    -- Bottom controls (Export button)
+    local exportBtn = make("TextButton", {
+        Size = UDim2.new(1, -s(32), 0, s(36)),
+        Position = UDim2.new(0, s(16), 1, -s(48)),
+        BackgroundColor3 = thm.Accent,
+        Text = "📋 Copy Theme Table to Clipboard",
+        TextColor3 = thm.Text,
+        TextSize = fs(12),
+        Font = Enum.Font.GothamBold,
+        Parent = mainFrame
+    })
+    make("UICorner", { CornerRadius = sz(10), Parent = exportBtn })
+
+    exportBtn.MouseButton1Click:Connect(function()
+        local str = "{\n"
+        for _, item in ipairs(colorKeys) do
+            local key = item.Key
+            local val = self.Theme[key]
+            str = str .. string.format("    %-12s = Color3.fromRGB(%d, %d, %d),\n", key, math.round(val.R*255), math.round(val.G*255), math.round(val.B*255))
+        end
+        str = str .. "}"
+        pcall(function() toclipboard(str) end)
+        self:Notify({
+            Title = "Theme Editor",
+            Content = "Custom theme table copied to clipboard!",
+            Duration = 3
+        })
+    end)
+    
+    exportBtn.MouseEnter:Connect(function() tw(exportBtn, { BackgroundColor3 = thm.AccentDim or Color3.fromRGB(15, 60, 30) }, 0.15) end)
+    exportBtn.MouseLeave:Connect(function() tw(exportBtn, { BackgroundColor3 = thm.Accent }, 0.15) end)
+end
+
+function Aurora:CreatePerformanceOverlay()
+    if _G.AuroraPerformanceOverlayGui then
+        _G.AuroraPerformanceOverlayGui.Enabled = not _G.AuroraPerformanceOverlayGui.Enabled
+        return
+    end
+
+    local thm = self.Theme or self.Themes.Dark
+    local overlayGui = make("ScreenGui", { Name = "AuroraPerformanceOverlay", ResetOnSpawn = false, DisplayOrder = 99997 })
+    safeParent(overlayGui)
+    _G.AuroraPerformanceOverlayGui = overlayGui
+
+    local frame = make("Frame", {
+        Size = UDim2.fromOffset(s(160), s(70)),
+        Position = UDim2.new(1, -s(180), 0, s(20)),
+        BackgroundColor3 = Color3.fromRGB(10, 10, 15),
+        BackgroundTransparency = 0.25,
+        Parent = overlayGui
+    })
+    createAcrylic(frame)
+    make("UICorner", { CornerRadius = sz(10), Parent = frame })
+    local stroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = frame })
+
+    -- Dragging
+    local dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragStart = nil
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    local changedConn = UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragStart then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    local fpsLbl = make("TextLabel", {
+        Size = UDim2.new(0.5, -s(8), 0, s(16)),
+        Position = UDim2.new(0, s(8), 0, s(6)),
+        BackgroundTransparency = 1,
+        Text = "FPS: --",
+        TextColor3 = thm.Text,
+        TextSize = fs(10),
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = frame
+    })
+
+    local pingLbl = make("TextLabel", {
+        Size = UDim2.new(0.5, -s(8), 0, s(16)),
+        Position = UDim2.new(0.5, 0, 0, s(6)),
+        BackgroundTransparency = 1,
+        Text = "Ping: --ms",
+        TextColor3 = thm.SubText,
+        TextSize = fs(10),
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        Parent = frame
+    })
+
+    -- Graph Frame
+    local graphFrame = make("Frame", {
+        Size = UDim2.new(1, -s(16), 0, s(32)),
+        Position = UDim2.new(0, s(8), 0, s(28)),
+        BackgroundTransparency = 1,
+        Parent = frame
+    })
+
+    -- Generate 25 vector bars
+    local bars = {}
+    local maxBarHeight = s(30)
+    for i = 1, 25 do
+        local bar = make("Frame", {
+            Size = UDim2.new(0, s(3), 0, s(2)),
+            Position = UDim2.new((i - 1)/25, 0, 1, 0),
+            AnchorPoint = Vector2.new(0, 1),
+            BackgroundColor3 = Color3.fromRGB(38, 195, 95),
+            BorderSizePixel = 0,
+            Parent = graphFrame
+        })
+        make("UICorner", { CornerRadius = sz(1), Parent = bar })
+        bars[i] = bar
+    end
+
+    -- Real-time tracking loop
+    local dtBuffer = {}
+    local history = {}
+    for i = 1, 25 do history[i] = 60 end
+
+    local renderConn = RunService.RenderStepped:Connect(function(dt)
+        table.insert(dtBuffer, dt)
+        if #dtBuffer > 60 then
+            table.remove(dtBuffer, 1)
+        end
+    end)
+
+    local stats = game:GetService("Stats")
+    local updateLoop = task.spawn(function()
+        while overlayGui and overlayGui.Parent do
+            local sum = 0
+            for _, v in ipairs(dtBuffer) do sum = sum + v end
+            local currentFps = #dtBuffer > 0 and math.round(#dtBuffer / sum) or 60
+            
+            local currentPing = 0
+            pcall(function()
+                currentPing = math.round(stats.Network.ServerToClientPing * 1000)
+            end)
+
+            fpsLbl.Text = string.format("FPS: %d", currentFps)
+            pingLbl.Text = string.format("Ping: %dms", currentPing)
+
+            table.remove(history, 1)
+            table.insert(history, currentFps)
+
+            for i = 1, 25 do
+                local val = history[i]
+                local pct = math.clamp(val / 60, 0, 1)
+                local barHeight = math.clamp(pct * maxBarHeight, s(2), maxBarHeight)
+                
+                local barColor = Color3.fromRGB(38, 195, 95)
+                if val < 30 then
+                    barColor = Color3.fromRGB(220, 55, 55)
+                elseif val < 50 then
+                    barColor = Color3.fromRGB(225, 155, 35)
+                end
+
+                bars[i].Size = UDim2.new(0, s(3), 0, barHeight)
+                bars[i].BackgroundColor3 = barColor
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    overlayGui.Destroying:Connect(function()
+        pcall(function() changedConn:Disconnect() end)
+        pcall(function() renderConn:Disconnect() end)
+        pcall(task.cancel, updateLoop)
+        _G.AuroraPerformanceOverlayGui = nil
+    end)
 end
 
 SaveManager:BuildFolderTree()
