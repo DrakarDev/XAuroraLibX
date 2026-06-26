@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿local TweenService = game:GetService("TweenService")
-=======
 local TweenService = game:GetService("TweenService")
->>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
@@ -18,10 +14,7 @@ Aurora.DelayPerTab = 0.25
 Aurora.DelayPerSection = 0.15
 Aurora.DelayPerElement = 0.05
 Aurora._globalElements = {}
-<<<<<<< HEAD
 local _isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
-=======
->>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
 local SC = 1.0
 local function s(n)
     return math.max(1, math.floor(n * SC + 0.5))
@@ -1872,11 +1865,7 @@ local function createColorpickerPanel(parentFrame, cpObj, cpCfg, colDisp)
     return panel
 end
 local _mobileKeybindCount = 0
-<<<<<<< HEAD
 -- _isMobile logic is now at the top of the file
-=======
-local _isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
->>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
 local function _createMobileKeybind(title, onToggleCallback)
     if not (_isMobile or Aurora.MobileButtonOverride) then
         return nil, nil, nil
@@ -4186,10 +4175,7 @@ function Aurora:CreateWindow(cfg)
         make("UIPadding",{PaddingTop=sz(14),PaddingBottom=sz(20),PaddingLeft=sz(14),PaddingRight=sz(14),Parent=c})
         l.Changed:Connect(function() defaultScroll.CanvasSize=UDim2.new(0,0,0,l.AbsoluteContentSize.Y+s(30)) end)
         local t=setmetatable({Button=btn,Page=p,ScrollContent=c,DefaultScroll=defaultScroll,TextLabel=lbl,IconImg=ico,IconStr=tcfg.Icon,Indicator=indicator, _window=win},Tab)
-<<<<<<< HEAD
         addVisibilityAPI(t, btn)
-=======
->>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
         btn.MouseEnter:Connect(function()
             if activeTab ~= t then
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
@@ -6900,8 +6886,4 @@ function Aurora:CreatePerformanceOverlay()
 end
 SaveManager:BuildFolderTree()
 Aurora.SaveManager = SaveManager
-<<<<<<< HEAD
 return Aurora
-=======
-return Aurora
->>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
