@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+﻿local TweenService = game:GetService("TweenService")
+=======
 local TweenService = game:GetService("TweenService")
+>>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
@@ -14,6 +18,10 @@ Aurora.DelayPerTab = 0.25
 Aurora.DelayPerSection = 0.15
 Aurora.DelayPerElement = 0.05
 Aurora._globalElements = {}
+<<<<<<< HEAD
+local _isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+=======
+>>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
 local SC = 1.0
 local function s(n)
     return math.max(1, math.floor(n * SC + 0.5))
@@ -132,6 +140,50 @@ local function addVisibilityAPI(obj, frame)
     obj.Frame = frame
     function obj:SetVisible(state)
         frame.Visible = state
+    end
+    function obj:SetPatched(state, customText)
+        if state then
+            if not self._patchedOverlay then
+                local overlay = make("TextButton", {
+                    Size = UDim2.fromScale(1, 1),
+                    Position = UDim2.fromScale(0.5, 0.5),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    BackgroundColor3 = Color3.fromRGB(80, 10, 10),
+                    BackgroundTransparency = 0.4,
+                    Text = "",
+                    AutoButtonColor = false,
+                    Active = true,
+                    ZIndex = 50,
+                    Parent = frame
+                })
+                local corner = frame:FindFirstChildOfClass("UICorner")
+                make("UICorner", { CornerRadius = corner and corner.CornerRadius or UDim.new(0, 8), Parent = overlay })
+                local txt = make("TextLabel", {
+                    Size = UDim2.new(1, -10, 1, -10),
+                    Position = UDim2.fromScale(0.5, 0.5),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    BackgroundTransparency = 1,
+                    Text = customText or "PATCHED",
+                    TextColor3 = Color3.fromRGB(255, 60, 60),
+                    TextScaled = true,
+                    Font = Enum.Font.GothamBlack,
+                    Rotation = -5,
+                    ZIndex = 51,
+                    Parent = overlay
+                })
+                make("UITextSizeConstraint", { MaxTextSize = 24, MinTextSize = 10, Parent = txt })
+                make("UIStroke", { Color = Color3.fromRGB(0,0,0), Thickness = 1.5, Parent = txt })
+                self._patchedOverlay = overlay
+            else
+                self._patchedOverlay.Visible = true
+                local txt = self._patchedOverlay:FindFirstChildOfClass("TextLabel")
+                if txt then txt.Text = customText or "PATCHED" end
+            end
+        else
+            if self._patchedOverlay then
+                self._patchedOverlay.Visible = false
+            end
+        end
     end
 end
 local function reg(obj, prop, key)
@@ -1549,6 +1601,7 @@ local function registerHover(f, hoverTrigger)
     local stroke = f:FindFirstChildOfClass("UIStroke")
     local hovered = false
     hoverTrigger.MouseEnter:Connect(function()
+        if _isMobile or (UserInputService:GetLastInputType() == Enum.UserInputType.Touch) then return end
         if hovered then return end
         hovered = true
         tw(f, { BackgroundColor3 = Aurora.Theme.ElementHover, BackgroundTransparency = 0.8 }, 0.12)
@@ -1819,7 +1872,11 @@ local function createColorpickerPanel(parentFrame, cpObj, cpCfg, colDisp)
     return panel
 end
 local _mobileKeybindCount = 0
+<<<<<<< HEAD
+-- _isMobile logic is now at the top of the file
+=======
 local _isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+>>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
 local function _createMobileKeybind(title, onToggleCallback)
     if not (_isMobile or Aurora.MobileButtonOverride) then
         return nil, nil, nil
@@ -2364,7 +2421,11 @@ function Section:AddSlider(id, cfg)
         triggerAutosave()
     end
     local drag=false
-    tr.InputBegan:Connect(function(i)
+    local hitbox = make("TextButton", {
+        Size=UDim2.new(1,0,1,s(20)), Position=UDim2.fromScale(0.5, 0.5), AnchorPoint=Vector2.new(0.5, 0.5),
+        BackgroundTransparency=1, Text="", ZIndex=10, Parent=tr
+    })
+    hitbox.InputBegan:Connect(function(i)
         if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
             drag=true; update(i.Position.X)
             tw(knobScale,{Scale=1.3},0.1,Enum.EasingStyle.Back)
@@ -4125,6 +4186,10 @@ function Aurora:CreateWindow(cfg)
         make("UIPadding",{PaddingTop=sz(14),PaddingBottom=sz(20),PaddingLeft=sz(14),PaddingRight=sz(14),Parent=c})
         l.Changed:Connect(function() defaultScroll.CanvasSize=UDim2.new(0,0,0,l.AbsoluteContentSize.Y+s(30)) end)
         local t=setmetatable({Button=btn,Page=p,ScrollContent=c,DefaultScroll=defaultScroll,TextLabel=lbl,IconImg=ico,IconStr=tcfg.Icon,Indicator=indicator, _window=win},Tab)
+<<<<<<< HEAD
+        addVisibilityAPI(t, btn)
+=======
+>>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
         btn.MouseEnter:Connect(function()
             if activeTab ~= t then
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
@@ -6835,4 +6900,8 @@ function Aurora:CreatePerformanceOverlay()
 end
 SaveManager:BuildFolderTree()
 Aurora.SaveManager = SaveManager
+<<<<<<< HEAD
 return Aurora
+=======
+return Aurora
+>>>>>>> 1c7a4037c2bac1948ed59516082963144d83ad89
