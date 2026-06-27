@@ -1881,12 +1881,12 @@ local function _createMobileKeybind(title, onToggleCallback)
     end
     _mobileKeybindCount = _mobileKeybindCount + 1
     local thm = Aurora.Theme or Aurora.Themes.Dark
-    local pillW, pillH = s(110), s(32)
-    local yOffset = s(160) + (_mobileKeybindCount - 1) * (pillH + s(6))
-    local defaultPos = UDim2.new(1, -(pillW + s(8)), 0, yOffset)
+    local btnSize = s(44)
+    local yOffset = s(160) + (_mobileKeybindCount - 1) * (btnSize + s(8))
+    local defaultPos = UDim2.new(1, -(btnSize + s(12)), 0, yOffset)
     local mobileBtn = make("TextButton", {
         Name = "MobileKeybind_" .. title,
-        Size = UDim2.fromOffset(pillW, pillH),
+        Size = UDim2.fromOffset(btnSize, btnSize),
         Position = defaultPos,
         BackgroundColor3 = Color3.fromRGB(18, 18, 24),
         BackgroundTransparency = 0.18,
@@ -1900,38 +1900,28 @@ local function _createMobileKeybind(title, onToggleCallback)
         Thickness = 1,
         Parent = mobileBtn
     })
-    local pillGloss = make("Frame", {
-        Size = UDim2.new(1, -s(4), 0, s(10)),
-        Position = UDim2.new(0, s(2), 0, s(1)),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 0.93,
-        BorderSizePixel = 0,
-        ZIndex = 201,
-        Parent = mobileBtn,
-    })
-    make("UICorner", { CornerRadius = UDim.new(1, 0), Parent = pillGloss })
     local dot = make("Frame", {
-        Size = UDim2.fromOffset(s(7), s(7)),
-        AnchorPoint = Vector2.new(0, 0.5),
-        Position = UDim2.new(0, s(9), 0.5, 0),
+        Size = UDim2.fromOffset(s(6), s(6)),
+        AnchorPoint = Vector2.new(0.5, 1),
+        Position = UDim2.new(0.5, 0, 1, -s(4)),
         BackgroundColor3 = thm.Border,
         BorderSizePixel = 0,
         ZIndex = 202,
         Parent = mobileBtn,
     })
     make("UICorner", { CornerRadius = UDim.new(1, 0), Parent = dot })
-    local shortText = title or "Feature"
-    if #shortText > 12 then shortText = shortText:sub(1, 11) .. "-" end
+    local shortText = title or "Btn"
+    if #shortText > 4 then shortText = shortText:sub(1, 4) end
     local mobileLbl = make("TextLabel", {
-        Size = UDim2.new(1, -s(22), 1, 0),
-        Position = UDim2.new(0, s(22), 0, 0),
+        Size = UDim2.new(1, -s(4), 1, -s(12)),
+        Position = UDim2.new(0, s(2), 0, s(2)),
         BackgroundTransparency = 1,
-        Text = shortText,
+        Text = shortText:upper(),
         TextColor3 = thm.SubText,
         TextSize = fs(11),
         Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextTruncate = Enum.TextTruncate.AtEnd,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextWrapped = true,
         ZIndex = 202,
         Parent = mobileBtn
     })
@@ -3366,6 +3356,32 @@ function Tab:AddSubTab(title)
     return subTabObj
 end
 function Aurora:CreateWindow(cfg)
+    pcall(function()
+        local guisToClean = {
+            "AuroraLib", "AuroraMobileToggleGui", "AuroraMobileKeybinds",
+            "AuroraWatermarkGui", "AuroraKeybindListGui", "AuroraTooltipGui", "AuroraNotifGui"
+        }
+        for _, n in ipairs(guisToClean) do
+            local core = game:GetService("CoreGui")
+            if core then
+                for _, c in ipairs(core:GetChildren()) do
+                    if c.Name == n then c:Destroy() end
+                end
+            end
+            local plr = game:GetService("Players").LocalPlayer
+            if plr then
+                local pg = plr:FindFirstChild("PlayerGui")
+                if pg then
+                    for _, c in ipairs(pg:GetChildren()) do
+                        if c.Name == n then c:Destroy() end
+                    end
+                end
+            end
+        end
+        Aurora.MobileKeybindsGui = nil
+        _mobileKeybindCount = 0
+    end)
+
     cfg=cfg or{}
     local defaultScale = _isMobile and 0.6 or 1.0
     SC=math.clamp(cfg.Scale or defaultScale, 0.4, 2.0); self.Scale=SC
