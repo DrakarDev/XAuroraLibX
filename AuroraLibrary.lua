@@ -97,7 +97,6 @@ local function tw(obj, props, t, style, dir)
     t = t or 0.2; style = style or Enum.EasingStyle.Quad; dir = dir or Enum.EasingDirection.Out
     local tween = TweenService:Create(obj, _getTweenInfo(t, style, dir), props)
     tween:Play()
-    tween.Completed:Connect(function() tween:Destroy() end)
     return tween
 end
 local function make(class, props)
