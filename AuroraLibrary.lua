@@ -3561,7 +3561,7 @@ function Aurora:CreateWindow(cfg)
             targetPos = UDim2.new(sp.X.Scale,sp.X.Offset+delta.X,sp.Y.Scale,sp.Y.Offset+delta.Y)
         end
     end)
-    local rsConn = RunService.RenderStepped:Connect(function(dt)
+    local rsConn = game:GetService("RunService").RenderStepped:Connect(function(dt)
         if drag and targetPos then
             main.Position = main.Position:Lerp(targetPos, math.clamp(dt * 15, 0, 1))
         end
