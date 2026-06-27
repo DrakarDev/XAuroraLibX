@@ -159,12 +159,13 @@ local function addVisibilityAPI(obj, frame)
                     Text = customText or "PATCHED",
                     TextColor3 = Color3.fromRGB(255, 60, 60),
                     TextScaled = true,
+                    TextWrapped = true,
                     Font = Enum.Font.GothamBlack,
                     Rotation = -5,
                     ZIndex = 51,
                     Parent = overlay
                 })
-                make("UITextSizeConstraint", { MaxTextSize = 24, MinTextSize = 10, Parent = txt })
+                make("UITextSizeConstraint", { MaxTextSize = math.floor(28 * SC), MinTextSize = 1, Parent = txt })
                 make("UIStroke", { Color = Color3.fromRGB(0,0,0), Thickness = 1.5, Parent = txt })
                 self._patchedOverlay = overlay
             else
@@ -3366,7 +3367,8 @@ function Tab:AddSubTab(title)
 end
 function Aurora:CreateWindow(cfg)
     cfg=cfg or{}
-    SC=math.clamp(cfg.Scale or 1.0, 0.7, 2.0); self.Scale=SC
+    local defaultScale = _isMobile and 0.6 or 1.0
+    SC=math.clamp(cfg.Scale or defaultScale, 0.4, 2.0); self.Scale=SC
     self.Theme=self.Themes[cfg.Theme] or self.Themes.Dark
     self.Acrylic = cfg.Acrylic == true
     Aurora.MobileButtonOverride = (cfg.MobileButton == true)
@@ -3448,20 +3450,43 @@ function Aurora:CreateWindow(cfg)
         })
     end
     make("Frame",{Size=UDim2.new(1,-s(24),0,s(1)),Position=UDim2.new(0,s(12),1,-1),BackgroundColor3=thm.Border,BackgroundTransparency=0.3,BorderSizePixel=0,Parent=logoFrame})
-    local userPanel=make("Frame",{Size=UDim2.new(1,-s(20),0,s(48)),Position=UDim2.new(0,s(10),0,s(60)),BackgroundColor3=thm.Element,BackgroundTransparency=0.35,Parent=sidebar})
+    local userPanel=make("TextButton",{Size=UDim2.new(1,-s(20),0,s(48)),Position=UDim2.new(0,s(10),0,s(60)),BackgroundColor3=thm.Element,BackgroundTransparency=0.35,Text="",AutoButtonColor=false,Parent=sidebar})
     make("UICorner",{CornerRadius=sz(12),Parent=userPanel})
     make("UIStroke",{Color=thm.Border,Thickness=1,Transparency=0.4,Parent=userPanel})
     local avatarImg=make("ImageLabel",{Size=ss(30,30),Position=UDim2.new(0,s(9),0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundColor3=thm.Element,BackgroundTransparency=0.4,Parent=userPanel})
     make("UICorner",{CornerRadius=UDim.new(1,0),Parent=avatarImg})
     make("UIStroke",{Color=thm.Accent,Thickness=1.5,Transparency=0.4,Parent=avatarImg})
+    
+    local realAvatar = ""
+    local realName = LocalPlayer.DisplayName or LocalPlayer.Name
+    local profileHidden = false
+    
     task.spawn(function()
         pcall(function()
             local content,isReady=Players:GetUserThumbnailAsync(LocalPlayer.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size48x48)
-            if isReady and avatarImg and avatarImg.Parent then avatarImg.Image=content end
+            if isReady and avatarImg and avatarImg.Parent then 
+                avatarImg.Image=content 
+                realAvatar = content
+            end
         end)
     end)
-    make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(13)),Position=UDim2.new(0,s(46),0,s(7)),BackgroundTransparency=1,Text="Welcome back,",TextColor3=thm.SubText,TextSize=fs(10),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=userPanel})
-    make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(15)),Position=UDim2.new(0,s(46),0,s(22)),BackgroundTransparency=1,Text=LocalPlayer.DisplayName or LocalPlayer.Name,TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=userPanel})
+    local welcomeLbl = make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(13)),Position=UDim2.new(0,s(46),0,s(7)),BackgroundTransparency=1,Text="Welcome back,",TextColor3=thm.SubText,TextSize=fs(10),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=userPanel})
+    local userLbl = make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(15)),Position=UDim2.new(0,s(46),0,s(22)),BackgroundTransparency=1,Text=realName,TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=userPanel})
+
+    userPanel.MouseButton1Click:Connect(function()
+        profileHidden = not profileHidden
+        if profileHidden then
+            userLbl.Text = "********"
+            welcomeLbl.Text = "Hidden Mode,"
+            avatarImg.ImageTransparency = 0.9
+            avatarImg.ImageColor3 = Color3.new(0, 0, 0)
+        else
+            userLbl.Text = realName
+            welcomeLbl.Text = "Welcome back,"
+            avatarImg.ImageTransparency = 0
+            avatarImg.ImageColor3 = Color3.new(1, 1, 1)
+        end
+    end)
     local searchFrame=make("Frame",{Size=UDim2.new(1,-s(20),0,s(30)),Position=UDim2.new(0,s(10),0,s(114)),BackgroundColor3=thm.InputBG,BackgroundTransparency=0.3,Parent=sidebar})
     make("UICorner",{CornerRadius=sz(10),Parent=searchFrame})
     make("UIStroke",{Color=thm.Border,Thickness=1,Transparency=0.5,Parent=searchFrame})
@@ -3717,18 +3742,25 @@ function Aurora:CreateWindow(cfg)
         toggling = true
         if state then
             visible = true
+            -- Enable the ScreenGui first, then defer 1 frame so the engine
+            -- settles its render tree before we start the scale animation.
+            -- This eliminates the FPS spike on show.
+            gui.Enabled = true
             main.Visible = true
-            resizeOverlay.Visible = not minimized
             uiScale.Scale = 0.8
-            local t = tw(uiScale, { Scale = 1 }, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-            t.Completed:Connect(function()
-                toggling = false
+            task.defer(function()
+                if not gui or not gui.Parent then toggling = false return end
+                resizeOverlay.Visible = not minimized
+                local t = tw(uiScale, { Scale = 1 }, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                t.Completed:Connect(function() toggling = false end)
             end)
         else
             resizeOverlay.Visible = false
             local t = tw(uiScale, { Scale = 0.8 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             t.Completed:Connect(function()
-                main.Visible = false
+                -- Disabling the ScreenGui is far cheaper than Visible=false on
+                -- a deep frame hierarchy — no per-child culling pass = no lag spike.
+                gui.Enabled = false
                 visible = false
                 toggling = false
             end)
@@ -3788,15 +3820,18 @@ function Aurora:CreateWindow(cfg)
             end
         end)
         table.insert(winConnections, minimizeConn)
-        local kbBadge = make("Frame", {
+        -- Clickable keybind badge — click to rebind the hide/show hotkey
+        local kbBadge = make("TextButton", {
             Size = UDim2.new(1, -s(18), 0, s(28)),
             Position = UDim2.new(0, s(9), 1, -s(36)),
             BackgroundColor3 = thm.Element,
             BackgroundTransparency = 0.5,
+            Text = "",
+            AutoButtonColor = false,
             Parent = sidebar,
         })
         make("UICorner", { CornerRadius = sz(10), Parent = kbBadge })
-        make("UIStroke", { Color = thm.Border, Thickness = 1, Transparency = 0.5, Parent = kbBadge })
+        local kbStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Transparency = 0.5, Parent = kbBadge })
         make("UIPadding", { PaddingLeft = sz(8), PaddingRight = sz(8), Parent = kbBadge })
         local kbIco = make("ImageLabel", {
             Size = ss(12, 12),
@@ -3806,18 +3841,56 @@ function Aurora:CreateWindow(cfg)
             Parent = kbBadge,
         })
         applyIcon(kbIco, "solar/keyboard-linear", thm.SubText)
-        local keyName = minimizeKey == Enum.KeyCode.None and "None" or minimizeKey.Name
-        make("TextLabel", {
+        local keyNameLbl = make("TextLabel", {
             Size = UDim2.new(1, -s(18), 1, 0),
             Position = UDim2.new(0, s(18), 0, 0),
             BackgroundTransparency = 1,
-            Text = keyName,
+            Text = minimizeKey == Enum.KeyCode.None and "None" or minimizeKey.Name,
             TextColor3 = thm.SubText,
             TextSize = fs(10),
             Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = kbBadge,
         })
+        -- Hover effect
+        kbBadge.MouseEnter:Connect(function()
+            tw(kbBadge, { BackgroundTransparency = 0.25, BackgroundColor3 = thm.ElementHover }, 0.12)
+            tw(kbStroke, { Transparency = 0.2 }, 0.12)
+        end)
+        kbBadge.MouseLeave:Connect(function()
+            tw(kbBadge, { BackgroundTransparency = 0.5, BackgroundColor3 = thm.Element }, 0.12)
+            tw(kbStroke, { Transparency = 0.5 }, 0.12)
+        end)
+        -- Rebind on click
+        local rebinding = false
+        local rebindConn
+        kbBadge.MouseButton1Click:Connect(function()
+            if rebinding then return end
+            rebinding = true
+            keyNameLbl.Text = "Press key..."
+            keyNameLbl.TextColor3 = thm.Accent
+            tw(kbBadge, { BackgroundColor3 = thm.Accent, BackgroundTransparency = 0.75 }, 0.15)
+            tw(kbStroke, { Color = thm.Accent, Transparency = 0.1 }, 0.15)
+            rebindConn = UserInputService.InputBegan:Connect(function(input, processed)
+                if processed then return end
+                if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                local newKey = input.KeyCode
+                if newKey == Enum.KeyCode.Escape then
+                    -- Cancel rebind, restore old label
+                    keyNameLbl.Text = minimizeKey == Enum.KeyCode.None and "None" or minimizeKey.Name
+                else
+                    minimizeKey = newKey
+                    keyNameLbl.Text = newKey.Name
+                end
+                keyNameLbl.TextColor3 = thm.SubText
+                tw(kbBadge, { BackgroundColor3 = thm.Element, BackgroundTransparency = 0.5 }, 0.15)
+                tw(kbStroke, { Color = thm.Border, Transparency = 0.5 }, 0.15)
+                rebindConn:Disconnect()
+                rebindConn = nil
+                rebinding = false
+            end)
+        end)
+        table.insert(winConnections, minimizeConn)
     end
     function win:Dialog(dcfg)
         dcfg = dcfg or {}
