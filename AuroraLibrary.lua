@@ -97,6 +97,7 @@ local function tw(obj, props, t, style, dir)
     t = t or 0.2; style = style or Enum.EasingStyle.Quad; dir = dir or Enum.EasingDirection.Out
     local tween = TweenService:Create(obj, _getTweenInfo(t, style, dir), props)
     tween:Play()
+    tween.Completed:Connect(function() tween:Destroy() end)
     return tween
 end
 local function make(class, props)
@@ -237,7 +238,7 @@ local function addTooltip(frame, text)
     if not text or text == "" then return end
     _initTooltip()
     local mouseConnection
-    frame.MouseEnter:Connect(function()
+    frame.MouseEnter:Connect(function() if _isMobile then return end 
         _tooltipLbl.Text = text
         _tooltipFrame.Visible = true
         _tooltipFrame.BackgroundTransparency = 1
@@ -253,7 +254,7 @@ local function addTooltip(frame, text)
             _tooltipFrame.Position = UDim2.new(0, x + 15, 0, y + 15)
         end)
     end)
-    frame.MouseLeave:Connect(function()
+    frame.MouseLeave:Connect(function() if _isMobile then return end 
         if mouseConnection then
             mouseConnection:Disconnect()
             mouseConnection = nil
@@ -1260,10 +1261,10 @@ function Aurora:Notify(cfg)
     end
     local function addHoverScale(btn)
         local scale = make("UIScale", { Scale = 1, Parent = btn })
-        btn.MouseEnter:Connect(function()
+        btn.MouseEnter:Connect(function() if _isMobile then return end 
             tw(scale, { Scale = 1.06 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         end)
-        btn.MouseLeave:Connect(function()
+        btn.MouseLeave:Connect(function() if _isMobile then return end 
             tw(scale, { Scale = 1.0 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         end)
     end
@@ -1368,11 +1369,11 @@ function Aurora:Notify(cfg)
                 make("UICorner", { CornerRadius = sz(9), Parent = button })
                 local bStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = button })
                 addHoverScale(button)
-                button.MouseEnter:Connect(function()
+                button.MouseEnter:Connect(function() if _isMobile then return end 
                     tw(button, { BackgroundColor3 = thm.ElementHover }, 0.1)
                     tw(bStroke, { Color = accent }, 0.1)
                 end)
-                button.MouseLeave:Connect(function()
+                button.MouseLeave:Connect(function() if _isMobile then return end 
                     tw(button, { BackgroundColor3 = thm.Element }, 0.1)
                     tw(bStroke, { Color = thm.Border }, 0.1)
                 end)
@@ -1427,10 +1428,10 @@ function Aurora:Notify(cfg)
         if contentLbl.Visible and contentLbl.Text ~= "" then t = t.."\n"..tostring(contentLbl.Text) end
         pcall(function() toclipboard(t) end)
     end)
-    closeBtn.MouseEnter:Connect(function() tw(closeBtn,{BackgroundTransparency=0.4,BackgroundColor3=Color3.fromRGB(200,50,50)},0.1) end)
-    closeBtn.MouseLeave:Connect(function() tw(closeBtn,{BackgroundTransparency=1},0.1) end)
-    copyBtn.MouseEnter:Connect(function() tw(copyBtn,{BackgroundTransparency=0.4,BackgroundColor3=thm.ElementHover},0.1) end)
-    copyBtn.MouseLeave:Connect(function() tw(copyBtn,{BackgroundTransparency=1},0.1) end)
+    closeBtn.MouseEnter:Connect(function() if _isMobile then return end tw(closeBtn,{BackgroundTransparency=0.4,BackgroundColor3=Color3.fromRGB(200,50,50)},0.1) end)
+    closeBtn.MouseLeave:Connect(function() if _isMobile then return end tw(closeBtn,{BackgroundTransparency=1},0.1) end)
+    copyBtn.MouseEnter:Connect(function() if _isMobile then return end tw(copyBtn,{BackgroundTransparency=0.4,BackgroundColor3=thm.ElementHover},0.1) end)
+    copyBtn.MouseLeave:Connect(function() if _isMobile then return end tw(copyBtn,{BackgroundTransparency=1},0.1) end)
     local cardDragging = false
     local cardDragStartPos = nil
     card.InputBegan:Connect(function(input)
@@ -1594,7 +1595,7 @@ end
 local function registerHover(f, hoverTrigger)
     local stroke = f:FindFirstChildOfClass("UIStroke")
     local hovered = false
-    hoverTrigger.MouseEnter:Connect(function()
+    hoverTrigger.MouseEnter:Connect(function() if _isMobile then return end 
         if _isMobile or (UserInputService:GetLastInputType() == Enum.UserInputType.Touch) then return end
         if hovered then return end
         hovered = true
@@ -1603,7 +1604,7 @@ local function registerHover(f, hoverTrigger)
             tw(stroke, { Color = Aurora.Theme.Accent, Transparency = 0.65 }, 0.12)
         end
     end)
-    hoverTrigger.MouseLeave:Connect(function()
+    hoverTrigger.MouseLeave:Connect(function() if _isMobile then return end 
         if not hovered then return end
         hovered = false
         tw(f, { BackgroundColor3 = Aurora.Theme.Element, BackgroundTransparency = 1 }, 0.18)
@@ -2741,7 +2742,7 @@ function Section:AddDropdown(id, cfg)
     make("UIPadding",{PaddingLeft=sz(8),Parent=searchBox})
     local optionScroll=make("ScrollingFrame",{
         Size=UDim2.new(1,0,0,s(112)),BackgroundTransparency=1,
-        ScrollBarThickness=s(2),ScrollBarImageColor3=thm.Scrollbar,CanvasSize=UDim2.new(0,0,0,0),LayoutOrder=2,Parent=dropdownList,
+        ScrollBarThickness=_isMobile and s(6) or s(2),ScrollBarImageColor3=thm.Scrollbar,CanvasSize=UDim2.new(0,0,0,0),LayoutOrder=2,Parent=dropdownList,
     })
     local olay=make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(2),Parent=optionScroll})
     olay.Changed:Connect(function() optionScroll.CanvasSize=UDim2.new(0,0,0,olay.AbsoluteContentSize.Y+s(4)) end)
@@ -2769,7 +2770,7 @@ function Section:AddDropdown(id, cfg)
                     BackgroundTransparency = isSel and 0.82 or 1
                 }, 0.12)
             end
-            optBtn.MouseEnter:Connect(function()
+            optBtn.MouseEnter:Connect(function() if _isMobile then return end 
                 local isSel=obj.Multi and (not not obj.Value[val]) or (obj.Value==val)
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
                 if not isSel then
@@ -2779,7 +2780,7 @@ function Section:AddDropdown(id, cfg)
                     tw(optBtn,{BackgroundTransparency=0.6},0.1)
                 end
             end)
-            optBtn.MouseLeave:Connect(function()
+            optBtn.MouseLeave:Connect(function() if _isMobile then return end 
                 local isSel=obj.Multi and (not not obj.Value[val]) or (obj.Value==val)
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
                 if not isSel then
@@ -3304,7 +3305,7 @@ function Tab:AddSubTab(title)
         self.SubPageContainer=make("Frame",{Size=UDim2.new(1,0,1,-s(44)),Position=UDim2.new(0,0,0,s(44)),BackgroundTransparency=1,Parent=self.Page})
     end
     local subPage=make("ScrollingFrame",{
-        Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ScrollBarThickness=s(2),
+        Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ScrollBarThickness=_isMobile and s(6) or s(2),
         ScrollBarImageColor3=Aurora.Theme.Scrollbar,Visible=false,Parent=self.SubPageContainer,
     })
     local subContent=make("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=subPage})
@@ -3328,13 +3329,13 @@ function Tab:AddSubTab(title)
             tw(subBtn, { BackgroundTransparency = 1, TextColor3 = currentThm.TabInactive }, 0.18)
         end
     end
-    subBtn.MouseEnter:Connect(function()
+    subBtn.MouseEnter:Connect(function() if _isMobile then return end 
         if not subPage.Visible then
             local currentThm = Aurora.Theme or Aurora.Themes.Dark
             tw(subBtn, { BackgroundColor3 = currentThm.ElementHover, BackgroundTransparency = 0.55, TextColor3 = currentThm.Text }, 0.12)
         end
     end)
-    subBtn.MouseLeave:Connect(function()
+    subBtn.MouseLeave:Connect(function() if _isMobile then return end 
         if not subPage.Visible then setActive(false) end
     end)
     local subTabObj=setmetatable({Button=subBtn,Page=subPage,ScrollContent=subContent,Underline=underline,_parentTab=self},SubTab)
@@ -3515,7 +3516,7 @@ function Aurora:CreateWindow(cfg)
     })
     local tabScroll=make("ScrollingFrame",{
         Size=UDim2.new(1,0,1,-s(194)),Position=UDim2.new(0,0,0,s(150)),
-        BackgroundTransparency=1,ScrollBarThickness=s(2),ScrollBarImageColor3=thm.Scrollbar,Parent=sidebar,
+        BackgroundTransparency=1,ScrollBarThickness=_isMobile and s(6) or s(2),ScrollBarImageColor3=thm.Scrollbar,Parent=sidebar,
     })
     local slay=make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(2),Parent=tabScroll})
     make("UIPadding",{PaddingTop=sz(6),PaddingBottom=sz(6),PaddingLeft=sz(8),PaddingRight=sz(8),Parent=tabScroll})
@@ -3531,8 +3532,8 @@ function Aurora:CreateWindow(cfg)
     local function makeCtrlBtn(order, hoverBG)
         local btn=make("TextButton",{Size=ss(20,20),BackgroundTransparency=1,Text="",LayoutOrder=order,ZIndex=10000,Parent=nil})
         make("UICorner",{CornerRadius=sz(8),Parent=btn})
-        btn.MouseEnter:Connect(function() tw(btn,{BackgroundColor3=hoverBG,BackgroundTransparency=0.15},0.1) end)
-        btn.MouseLeave:Connect(function() tw(btn,{BackgroundTransparency=1},0.1) end)
+        btn.MouseEnter:Connect(function() if _isMobile then return end tw(btn,{BackgroundColor3=hoverBG,BackgroundTransparency=0.15},0.1) end)
+        btn.MouseLeave:Connect(function() if _isMobile then return end tw(btn,{BackgroundTransparency=1},0.1) end)
         return btn
     end
     local controls=make("Frame",{Size=ss(80,20),Position=UDim2.new(1,-s(12),0,s(12)),AnchorPoint=Vector2.new(1,0),BackgroundTransparency=1,ZIndex=9999,Parent=main})
@@ -3547,16 +3548,32 @@ function Aurora:CreateWindow(cfg)
     local cl1=make("Frame",{Size=UDim2.new(1,0,0,s(1)),AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),BackgroundColor3=thm.SubText,BorderSizePixel=0,Rotation=45,Parent=clsIco})
     local cl2=make("Frame",{Size=UDim2.new(1,0,0,s(1)),AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),BackgroundColor3=thm.SubText,BorderSizePixel=0,Rotation=-45,Parent=clsIco})
     local drag,ds,sp=false,nil,nil
-    top.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=true; ds=i.Position; sp=main.Position end end)
+    local targetPos = nil
+    top.InputBegan:Connect(function(i) 
+        if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then 
+            drag=true; ds=i.Position; sp=main.Position
+            targetPos = sp
+        end 
+    end)
     local dragChanged = UserInputService.InputChanged:Connect(function(i)
         if drag and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
             local delta=i.Position-ds
-            main.Position=UDim2.new(sp.X.Scale,sp.X.Offset+delta.X,sp.Y.Scale,sp.Y.Offset+delta.Y)
+            targetPos = UDim2.new(sp.X.Scale,sp.X.Offset+delta.X,sp.Y.Scale,sp.Y.Offset+delta.Y)
         end
     end)
-    local dragEnded = UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end end)
+    local rsConn = RunService.RenderStepped:Connect(function(dt)
+        if drag and targetPos then
+            main.Position = main.Position:Lerp(targetPos, math.clamp(dt * 15, 0, 1))
+        end
+    end)
+    local dragEnded = UserInputService.InputEnded:Connect(function(i) 
+        if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then 
+            drag=false 
+        end 
+    end)
     table.insert(winConnections, dragChanged)
     table.insert(winConnections, dragEnded)
+    table.insert(winConnections, rsConn)
     local resizeOverlay = make("Frame", {
         Name = "ResizeOverlay",
         Size = main.Size,
@@ -3604,8 +3621,8 @@ function Aurora:CreateWindow(cfg)
     local resEnded = UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=false end end)
     table.insert(winConnections, resChanged)
     table.insert(winConnections, resEnded)
-    resizeCorner.MouseEnter:Connect(function() tw(resizeCorner,{BackgroundTransparency=0.6},0.1) end)
-    resizeCorner.MouseLeave:Connect(function() tw(resizeCorner,{BackgroundTransparency=0.9},0.1) end)
+    resizeCorner.MouseEnter:Connect(function() if _isMobile then return end tw(resizeCorner,{BackgroundTransparency=0.6},0.1) end)
+    resizeCorner.MouseLeave:Connect(function() if _isMobile then return end tw(resizeCorner,{BackgroundTransparency=0.9},0.1) end)
     local function createResizeEdge(name, size, pos, resizeType)
         local edge = make("TextButton", {
             Name = name,
@@ -3623,10 +3640,10 @@ function Aurora:CreateWindow(cfg)
             BorderSizePixel = 0,
             Parent = edge
         })
-        edge.MouseEnter:Connect(function()
+        edge.MouseEnter:Connect(function() if _isMobile then return end 
             tw(hl, { BackgroundTransparency = 0.65 }, 0.1)
         end)
-        edge.MouseLeave:Connect(function()
+        edge.MouseLeave:Connect(function() if _isMobile then return end 
             tw(hl, { BackgroundTransparency = 1 }, 0.1)
         end)
         local dragStartPos, dragStartSize, dragStartWindowPos
@@ -3729,10 +3746,10 @@ function Aurora:CreateWindow(cfg)
         make("UIStroke",{Color=thm.Border,Thickness=1,Parent=noBtn})
         local yesBtn=make("TextButton",{Size=ss(88,24),BackgroundColor3=thm.AlertError,Text="Close",TextColor3=Color3.fromRGB(255,255,255),TextSize=fs(16),Font=Enum.Font.GothamBold,LayoutOrder=2,Parent=btnRow})
         make("UICorner",{CornerRadius=sz(10),Parent=yesBtn})
-        yesBtn.MouseEnter:Connect(function() tw(yesBtn,{BackgroundColor3=Color3.fromRGB(240,75,75)},0.1) end)
-        yesBtn.MouseLeave:Connect(function() tw(yesBtn,{BackgroundColor3=thm.AlertError},0.1) end)
-        noBtn.MouseEnter:Connect(function() tw(noBtn,{BackgroundColor3=thm.ElementHover},0.1) end)
-        noBtn.MouseLeave:Connect(function() tw(noBtn,{BackgroundColor3=thm.Element},0.1) end)
+        yesBtn.MouseEnter:Connect(function() if _isMobile then return end tw(yesBtn,{BackgroundColor3=Color3.fromRGB(240,75,75)},0.1) end)
+        yesBtn.MouseLeave:Connect(function() if _isMobile then return end tw(yesBtn,{BackgroundColor3=thm.AlertError},0.1) end)
+        noBtn.MouseEnter:Connect(function() if _isMobile then return end tw(noBtn,{BackgroundColor3=thm.ElementHover},0.1) end)
+        noBtn.MouseLeave:Connect(function() if _isMobile then return end tw(noBtn,{BackgroundColor3=thm.Element},0.1) end)
         yesBtn.MouseButton1Click:Connect(function()
             tw(overlay,{BackgroundTransparency=1},0.15)
             tw(main,{Size=UDim2.new(0,main.AbsoluteSize.X,0,0),BackgroundTransparency=1},0.22)
@@ -3869,11 +3886,11 @@ function Aurora:CreateWindow(cfg)
             Parent = kbBadge,
         })
         -- Hover effect
-        kbBadge.MouseEnter:Connect(function()
+        kbBadge.MouseEnter:Connect(function() if _isMobile then return end 
             tw(kbBadge, { BackgroundTransparency = 0.25, BackgroundColor3 = thm.ElementHover }, 0.12)
             tw(kbStroke, { Transparency = 0.2 }, 0.12)
         end)
-        kbBadge.MouseLeave:Connect(function()
+        kbBadge.MouseLeave:Connect(function() if _isMobile then return end 
             tw(kbBadge, { BackgroundTransparency = 0.5, BackgroundColor3 = thm.Element }, 0.12)
             tw(kbStroke, { Transparency = 0.5 }, 0.12)
         end)
@@ -4003,10 +4020,10 @@ function Aurora:CreateWindow(cfg)
             if idx == 1 then
                 make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = btn })
             end
-            btn.MouseEnter:Connect(function()
+            btn.MouseEnter:Connect(function() if _isMobile then return end 
                 tw(btn, { BackgroundColor3 = idx == 1 and thm.ElementHover or Color3.fromRGB(math.clamp(thm.Accent.R*255+20,0,255), math.clamp(thm.Accent.G*255+20,0,255), math.clamp(thm.Accent.B*255+20,0,255)) }, 0.1)
             end)
-            btn.MouseLeave:Connect(function()
+            btn.MouseLeave:Connect(function() if _isMobile then return end 
                 tw(btn, { BackgroundColor3 = idx == 1 and thm.Element or thm.Accent }, 0.1)
             end)
             btn.MouseButton1Click:Connect(function()
@@ -4037,7 +4054,7 @@ function Aurora:CreateWindow(cfg)
                 Position = UDim2.new(0, s(9), 0, s(135)),
                 BackgroundColor3 = thm.Element,
                 BackgroundTransparency = 0.1,
-                ScrollBarThickness = s(2),
+                ScrollBarThickness=_isMobile and s(6) or s(2),
                 ScrollBarImageColor3 = thm.Scrollbar,
                 ClipsDescendants = true,
                 Visible = false,
@@ -4142,8 +4159,8 @@ function Aurora:CreateWindow(cfg)
                     ZIndex = 53,
                     Parent = row,
                 })
-                row.MouseEnter:Connect(function() tw(row, { BackgroundTransparency = 0.2 }, 0.1) end)
-                row.MouseLeave:Connect(function() tw(row, { BackgroundTransparency = 0.5 }, 0.1) end)
+                row.MouseEnter:Connect(function() if _isMobile then return end tw(row, { BackgroundTransparency = 0.2 }, 0.1) end)
+                row.MouseLeave:Connect(function() if _isMobile then return end tw(row, { BackgroundTransparency = 0.5 }, 0.1) end)
                 row.MouseButton1Click:Connect(function()
                     local tab = entry.tab
                     if tab then
@@ -4188,12 +4205,12 @@ function Aurora:CreateWindow(cfg)
             TextSize=fs(10),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=header,
         })
         local isHovering = false
-        header.MouseEnter:Connect(function()
+        header.MouseEnter:Connect(function() if _isMobile then return end 
             isHovering = true
             local currentThm = Aurora.Theme or Aurora.Themes.Dark
             tw(header, { BackgroundColor3 = currentThm.ElementHover, BackgroundTransparency = 0.8 }, 0.15)
         end)
-        header.MouseLeave:Connect(function()
+        header.MouseLeave:Connect(function() if _isMobile then return end 
             isHovering = false
             tw(header, { BackgroundTransparency = 1 }, 0.15)
         end)
@@ -4258,14 +4275,14 @@ function Aurora:CreateWindow(cfg)
         })
         make("UICorner",{CornerRadius=sz(2),Parent=indicator})
         local p=make("Frame",{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false,Parent=tabHold})
-        local defaultScroll=make("ScrollingFrame",{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ScrollBarThickness=s(2),ScrollBarImageColor3=thm.Scrollbar,Parent=p})
+        local defaultScroll=make("ScrollingFrame",{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ScrollBarThickness=_isMobile and s(6) or s(2),ScrollBarImageColor3=thm.Scrollbar,Parent=p})
         local c=make("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=defaultScroll})
         local l=make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(10),Parent=c})
         make("UIPadding",{PaddingTop=sz(14),PaddingBottom=sz(20),PaddingLeft=sz(14),PaddingRight=sz(14),Parent=c})
         l.Changed:Connect(function() defaultScroll.CanvasSize=UDim2.new(0,0,0,l.AbsoluteContentSize.Y+s(30)) end)
         local t=setmetatable({Button=btn,Page=p,ScrollContent=c,DefaultScroll=defaultScroll,TextLabel=lbl,IconImg=ico,IconStr=tcfg.Icon,Indicator=indicator, _window=win},Tab)
         addVisibilityAPI(t, btn)
-        btn.MouseEnter:Connect(function()
+        btn.MouseEnter:Connect(function() if _isMobile then return end 
             if activeTab ~= t then
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
                 tw(btn, { BackgroundColor3 = currentThm.ElementHover, BackgroundTransparency = 0.6 }, 0.15)
@@ -4273,7 +4290,7 @@ function Aurora:CreateWindow(cfg)
                 if ico then applyIcon(ico, tcfg.Icon, currentThm.Text) end
             end
         end)
-        btn.MouseLeave:Connect(function()
+        btn.MouseLeave:Connect(function() if _isMobile then return end 
             if activeTab ~= t then
                 local currentThm = Aurora.Theme or Aurora.Themes.Dark
                 tw(btn, { BackgroundTransparency = 1 }, 0.15)
@@ -5424,12 +5441,12 @@ function Section:AddViewport(id, cfg)
         applyIcon(ico, icon, thm.SubText)
         if tooltip and tooltip ~= "" then addTooltip(btn, tooltip) end
         local scale = make("UIScale", { Scale = 1, Parent = btn })
-        btn.MouseEnter:Connect(function()
+        btn.MouseEnter:Connect(function() if _isMobile then return end 
             tw(scale, { Scale = 1.08 }, 0.12, Enum.EasingStyle.Quad)
             tw(btn, { BackgroundTransparency = 0 }, 0.12)
             tw(bStroke, { Transparency = 0, Color = thm.Accent }, 0.12)
         end)
-        btn.MouseLeave:Connect(function()
+        btn.MouseLeave:Connect(function() if _isMobile then return end 
             tw(scale, { Scale = 1.0 }, 0.12, Enum.EasingStyle.Quad)
             tw(btn, { BackgroundTransparency = 0.3 }, 0.12)
             tw(bStroke, { Transparency = 0.4, Color = thm.Border }, 0.12)
@@ -5729,12 +5746,12 @@ function Section:AddViewport(id, cfg)
             updateCamera()
         end
     end)
-    vpOuter.MouseEnter:Connect(function()
+    vpOuter.MouseEnter:Connect(function() if _isMobile then return end 
         if not dragging then
             tw(vpStroke, { Transparency = 0.1 }, 0.2)
         end
     end)
-    vpOuter.MouseLeave:Connect(function()
+    vpOuter.MouseLeave:Connect(function() if _isMobile then return end 
         if not dragging then
             tw(vpStroke, { Transparency = 0.3 }, 0.2)
         end
@@ -6430,10 +6447,10 @@ function KeySystem.new(cfg)
         Parent = mainFrame
     })
     local function addBtnEffect(btn, bgNormal, bgHover)
-        btn.MouseEnter:Connect(function()
+        btn.MouseEnter:Connect(function() if _isMobile then return end 
             tw(btn, { BackgroundColor3 = bgHover }, 0.15)
         end)
-        btn.MouseLeave:Connect(function()
+        btn.MouseLeave:Connect(function() if _isMobile then return end 
             tw(btn, { BackgroundColor3 = bgNormal }, 0.15)
         end)
     end
@@ -6840,8 +6857,8 @@ function Aurora:CreateThemeEditor()
             Duration = 3
         })
     end)
-    exportBtn.MouseEnter:Connect(function() tw(exportBtn, { BackgroundColor3 = thm.AccentDim or Color3.fromRGB(15, 60, 30) }, 0.15) end)
-    exportBtn.MouseLeave:Connect(function() tw(exportBtn, { BackgroundColor3 = thm.Accent }, 0.15) end)
+    exportBtn.MouseEnter:Connect(function() if _isMobile then return end tw(exportBtn, { BackgroundColor3 = thm.AccentDim or Color3.fromRGB(15, 60, 30) }, 0.15) end)
+    exportBtn.MouseLeave:Connect(function() if _isMobile then return end tw(exportBtn, { BackgroundColor3 = thm.Accent }, 0.15) end)
 end
 function Aurora:CreatePerformanceOverlay()
     if _G.AuroraPerformanceOverlayGui then
