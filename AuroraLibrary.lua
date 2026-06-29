@@ -14,6 +14,35 @@ Aurora.DelayPerTab = 0.25
 Aurora.DelayPerSection = 0.15
 Aurora.DelayPerElement = 0.05
 Aurora._globalElements = {}
+Aurora.SoundEnabled = true
+-- Sonidos centralizados (Creator Store, free-to-use). Cambia cualquiera aqui o con Aurora:SetSound(name,id).
+Aurora.Sounds = {
+    Click   = 876939830,
+    Toggle  = 876939830,
+    Open    = 876939830,
+    Close   = 876939830,
+    Hover   = 0,
+    Success = 4590662762,
+    Error   = 9069609268,
+    Warning = 6546366050,
+    Info    = 4590662762,
+}
+function Aurora:PlaySound(name, volume)
+    if not Aurora.SoundEnabled then return end
+    local id = Aurora.Sounds and Aurora.Sounds[name]
+    if not id or id == 0 then return end
+    task.spawn(function()
+        pcall(function()
+            local snd = Instance.new("Sound")
+            snd.SoundId = "rbxassetid://" .. tostring(id)
+            snd.Volume = volume or 0.35
+            snd.Parent = game:GetService("SoundService")
+            snd:Play()
+            task.delay(2, function() if snd then snd:Destroy() end end)
+        end)
+    end)
+end
+function Aurora:SetSound(name, id) if Aurora.Sounds then Aurora.Sounds[name] = id end end
 local _isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 local SC = 1.0
 local function s(n)
@@ -1138,10 +1167,10 @@ function Aurora:Notify(cfg)
     local dur = cfg.Duration or 4
     local accentMap = { Success=thm.AlertSuccess, Error=thm.AlertError, Warning=thm.AlertWarn, Info=thm.AlertInfo }
     local iconMap = { Success="solar/check-circle-bold", Error="solar/close-circle-bold", Warning="solar/danger-bold", Info="solar/info-circle-bold" }
-    local soundMap = { Success=4590662762, Error=9069609268, Warning=6546366050, Info=4590662762 }
+    local soundMap = { Success=Aurora.Sounds.Success, Error=Aurora.Sounds.Error, Warning=Aurora.Sounds.Warning, Info=Aurora.Sounds.Info }
     local accent = accentMap[typ] or thm.Accent
     local function playSound(soundId)
-        if cfg.PlaySound == false then return end
+        if cfg.PlaySound == false or not Aurora.SoundEnabled then return end
         task.spawn(function()
             local s = make("Sound", {
                 SoundId = "rbxassetid://" .. tostring(soundId),
@@ -2076,7 +2105,7 @@ function Section:AddToggle(id, cfg)
             pcall(obj.Keybind.updateVisualState)
         end
     end
-    pill.MouseButton1Click:Connect(function() set(not obj.Value) end)
+    pill.MouseButton1Click:Connect(function() Aurora:PlaySound("Toggle") set(not obj.Value) end)
     pill.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
             tw(knob, { Size=UDim2.fromOffset(knobSize+s(3), knobSize-s(2)) }, 0.08)
@@ -2090,7 +2119,7 @@ function Section:AddToggle(id, cfg)
     local btn = make("TextButton", {
         Size=UDim2.new(1,-s(170),1,0), BackgroundTransparency=1, Text="", ZIndex=1, Parent=topF,
     })
-    btn.MouseButton1Click:Connect(function() set(not obj.Value) end)
+    btn.MouseButton1Click:Connect(function() Aurora:PlaySound("Toggle") set(not obj.Value) end)
     registerHover(f, btn)
     function obj:SetValue(v) set(v, true) end
     function obj:OnChanged(func)
@@ -2607,6 +2636,7 @@ function Section:AddButton(cfg)
     applyIcon(arr,"solar/alt-arrow-right-bold",thm.Accent)
     local btn=make("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",Parent=topF})
     btn.MouseButton1Click:Connect(function()
+        Aurora:PlaySound("Click")
         pcall(function()
             local ripple = make("Frame",{
                 Size=UDim2.fromOffset(0,0),
@@ -3764,35 +3794,58 @@ function Aurora:CreateWindow(cfg)
     minBtn.MouseButton1Click:Connect(toggleMinimize)
     maxBtn.MouseButton1Click:Connect(toggleMaximize)
     closeBtn.MouseButton1Click:Connect(showClosePrompt)
+    -- [Opt] Envoltorio CanvasGroup: el toggle se anima por GroupTransparency
+    -- (composite en GPU, sin re-layout) y el ScreenGui queda siempre Enabled
+    -- (sin reconstruccion del arbol). Elimina el pico de FPS al ocultar/mostrar.
+    local canvas = make("CanvasGroup", {
+        Name = "AuroraCanvas",
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        GroupTransparency = 0,
+        ZIndex = 1,
+        Parent = main,
+    })
+    make("UICorner", { CornerRadius = sz(20), Parent = canvas })
+    for _, _ch in ipairs(main:GetChildren()) do
+        if _ch ~= canvas and _ch:IsA("GuiObject") then
+            _ch.Parent = canvas
+        end
+    end
     local minimizeKey=cfg.MinimizeKey or Enum.KeyCode.LeftShift
     local visible=true
     local win={Tabs={},Categories={},GUI=gui,MainFrame=main, _connections=winConnections}
     local uiScale = main:FindFirstChildOfClass("UIScale") or make("UIScale", { Scale = 1, Parent = main })
     local toggling = false
+    local _mainBgShown = main.BackgroundTransparency
+    local _strokeShown = mainStroke.Transparency
     function win:SetVisible(state)
-        if toggling then return end
+        state = state and true or false
+        if toggling or state == visible then return end
         toggling = true
         if state then
             visible = true
-            -- Enable the ScreenGui first, then defer 1 frame so the engine
-            -- settles its render tree before we start the scale animation.
-            -- This eliminates the FPS spike on show.
-            gui.Enabled = true
             main.Visible = true
-            uiScale.Scale = 0.8
-            task.defer(function()
-                if not gui or not gui.Parent then toggling = false return end
-                resizeOverlay.Visible = not minimized
-                local t = tw(uiScale, { Scale = 1 }, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                t.Completed:Connect(function() toggling = false end)
-            end)
+            canvas.Visible = true
+            resizeOverlay.Visible = not minimized
+            -- Entrada: lift sutil (solo Position, sin re-layout) + fade por GroupTransparency.
+            local rest = main.Position
+            main.Position = rest + UDim2.fromOffset(0, s(16))
+            tw(main, { Position = rest }, 0.30, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            tw(main, { BackgroundTransparency = _mainBgShown }, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            tw(mainStroke, { Transparency = _strokeShown }, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            local t = tw(canvas, { GroupTransparency = 0 }, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            t.Completed:Connect(function() toggling = false end)
         else
             resizeOverlay.Visible = false
-            local t = tw(uiScale, { Scale = 0.8 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            -- Salida: hunde levemente + fade. Nada de gui.Enabled ni main.Visible: cero rebuild.
+            local rest = main.Position
+            tw(main, { Position = rest + UDim2.fromOffset(0, s(12)) }, 0.18, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+            tw(main, { BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+            tw(mainStroke, { Transparency = 1 }, 0.16, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+            local t = tw(canvas, { GroupTransparency = 1 }, 0.16, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
             t.Completed:Connect(function()
-                -- Disabling the ScreenGui is far cheaper than Visible=false on
-                -- a deep frame hierarchy — no per-child culling pass = no lag spike.
-                gui.Enabled = false
+                main.Position = rest
                 visible = false
                 toggling = false
             end)
@@ -3922,7 +3975,6 @@ function Aurora:CreateWindow(cfg)
                 rebinding = false
             end)
         end)
-        table.insert(winConnections, minimizeConn)
     end
     function win:Dialog(dcfg)
         dcfg = dcfg or {}
@@ -4536,6 +4588,105 @@ function Aurora:CreateWindow(cfg)
     end)
     function win:Destroy()
         pcall(function() gui:Destroy() end)
+    end
+    -- ===== Animacion de carga / intro =====
+    if cfg.LoadingScreen ~= false then
+        visible = false
+        canvas.GroupTransparency = 1
+        main.BackgroundTransparency = 1
+        mainStroke.Transparency = 1
+        resizeOverlay.Visible = false
+        task.spawn(function()
+            local loadGui = make("ScreenGui", {
+                Name = "AuroraLoadingGui", ResetOnSpawn = false, IgnoreGuiInset = true,
+                DisplayOrder = 100001, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+            })
+            safeParent(loadGui)
+            local dim = make("Frame", {
+                Size = UDim2.fromScale(1,1), BackgroundColor3 = Color3.fromRGB(6,6,9),
+                BackgroundTransparency = 1, BorderSizePixel = 0, Parent = loadGui,
+            })
+            make("UIGradient", { Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(14,14,20)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(5,5,8)) }), Rotation = 90, Parent = dim })
+            local card = make("Frame", {
+                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.52),
+                Size = ss(260,150), BackgroundTransparency = 1, Parent = dim,
+            })
+            local ring = make("Frame", {
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,0),
+                Size = ss(46,46), BackgroundTransparency = 1, Parent = card,
+            })
+            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = ring })
+            local ringStroke = make("UIStroke", { Thickness = s(3), Color = thm.Accent, Transparency = 1, Parent = ring })
+            make("UIGradient", { Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(0.5,0.25),
+                NumberSequenceKeypoint.new(0.75,1), NumberSequenceKeypoint.new(1,1) }), Parent = ringStroke })
+            local logo = make("ImageLabel", {
+                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.new(0.5,0,0,s(23)),
+                Size = ss(22,22), BackgroundTransparency = 1, ImageTransparency = 1, Parent = card,
+            })
+            applyIcon(logo, cfg.LoadingIcon or cfg.Icon or "solar/star-bold", thm.Accent)
+            local titleLbl = make("TextLabel", {
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(64)),
+                Size = ss(260,22), BackgroundTransparency = 1, Text = cfg.Title or "Aurora",
+                TextColor3 = thm.Text, TextTransparency = 1, TextSize = fs(18), Font = Enum.Font.GothamBlack, Parent = card,
+            })
+            local subLbl = make("TextLabel", {
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(88)),
+                Size = ss(260,16), BackgroundTransparency = 1, Text = cfg.LoadingText or cfg.SubTitle or "Loading...",
+                TextColor3 = thm.SubText, TextTransparency = 1, TextSize = fs(11), Font = Enum.Font.Gotham, Parent = card,
+            })
+            local barBG = make("Frame", {
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(116)),
+                Size = ss(200,4), BackgroundColor3 = thm.Element, BackgroundTransparency = 1, BorderSizePixel = 0, Parent = card,
+            })
+            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = barBG })
+            local barFill = make("Frame", {
+                Size = UDim2.new(0,0,1,0), BackgroundColor3 = thm.Accent,
+                BackgroundTransparency = 1, BorderSizePixel = 0, Parent = barBG,
+            })
+            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = barFill })
+            tw(dim, { BackgroundTransparency = 0.05 }, 0.3)
+            tw(ringStroke, { Transparency = 0 }, 0.35)
+            tw(logo, { ImageTransparency = 0 }, 0.35)
+            tw(titleLbl, { TextTransparency = 0 }, 0.4)
+            tw(subLbl, { TextTransparency = 0 }, 0.4)
+            tw(barBG, { BackgroundTransparency = 0.6 }, 0.4)
+            tw(barFill, { BackgroundTransparency = 0 }, 0.4)
+            local spinning = true
+            task.spawn(function()
+                while spinning and ring and ring.Parent do
+                    ring.Rotation = (ring.Rotation + 7) % 360
+                    task.wait()
+                end
+            end)
+            task.spawn(function()
+                while spinning and logo and logo.Parent do
+                    local a = tw(logo, { Size = ss(26,26) }, 0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+                    a.Completed:Wait()
+                    if not spinning then break end
+                    local b = tw(logo, { Size = ss(22,22) }, 0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+                    b.Completed:Wait()
+                end
+            end)
+            local dur = cfg.LoadingDuration or 1.8
+            tw(barFill, { Size = UDim2.new(1,0,1,0) }, dur, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            task.wait(dur + 0.15)
+            spinning = false
+            tw(dim, { BackgroundTransparency = 1 }, 0.35)
+            tw(ringStroke, { Transparency = 1 }, 0.3)
+            tw(logo, { ImageTransparency = 1 }, 0.3)
+            tw(titleLbl, { TextTransparency = 1 }, 0.3)
+            tw(subLbl, { TextTransparency = 1 }, 0.3)
+            tw(barBG, { BackgroundTransparency = 1 }, 0.3)
+            tw(barFill, { BackgroundTransparency = 1 }, 0.3)
+            task.wait(0.16)
+            pcall(function() win:SetVisible(true) end)
+            Aurora:PlaySound("Open")
+            task.wait(0.5)
+            pcall(function() loadGui:Destroy() end)
+        end)
     end
     return win
 end
@@ -6946,7 +7097,7 @@ function Aurora:CreatePerformanceOverlay()
     local dtBuffer = {}
     local history = {}
     for i = 1, 25 do history[i] = 60 end
-    local renderConn = RunService.RenderStepped:Connect(function(dt)
+    local renderConn = game:GetService("RunService").RenderStepped:Connect(function(dt)
         table.insert(dtBuffer, dt)
         if #dtBuffer > 60 then
             table.remove(dtBuffer, 1)
