@@ -43,6 +43,37 @@ function Aurora:PlaySound(name, volume)
     end)
 end
 function Aurora:SetSound(name, id) if Aurora.Sounds then Aurora.Sounds[name] = id end end
+-- Auto-ejecucion: escribe el script en la carpeta autoexec del executor para que
+-- la GUI se cargue sola al reentrar al juego. Depende del soporte del executor.
+function Aurora:SetupAutoExecute(source, name)
+    name = name or "AuroraAutoLoad.lua"
+    if type(source) ~= "string" then return false, "source debe ser un string (url o codigo)" end
+    local content = source
+    if source:match("^https?://") then
+        content = 'loadstring(game:HttpGet("' .. source .. '"))()'
+    end
+    local ok = false
+    pcall(function()
+        if not writefile then return end
+        for _, folder in ipairs({ "autoexec", "Autoexec", "auto_exec", "autoexecute" }) do
+            local okk = pcall(function()
+                if isfolder and makefolder and not isfolder(folder) then makefolder(folder) end
+                writefile(folder .. "/" .. name, content)
+            end)
+            if okk then ok = true break end
+        end
+        if not ok then pcall(function() writefile(name, content); ok = true end) end
+    end)
+    return ok
+end
+function Aurora:RemoveAutoExecute(name)
+    name = name or "AuroraAutoLoad.lua"
+    pcall(function()
+        for _, folder in ipairs({ "autoexec", "Autoexec", "auto_exec", "autoexecute" }) do
+            pcall(function() if delfile and isfile and isfile(folder.."/"..name) then delfile(folder.."/"..name) end end)
+        end
+    end)
+end
 local _isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 local SC = 1.0
 local function s(n)
@@ -170,8 +201,8 @@ local function addVisibilityAPI(obj, frame)
                     Size = UDim2.fromScale(1, 1),
                     Position = UDim2.fromScale(0.5, 0.5),
                     AnchorPoint = Vector2.new(0.5, 0.5),
-                    BackgroundColor3 = Color3.fromRGB(80, 10, 10),
-                    BackgroundTransparency = 0.4,
+                    BackgroundColor3 = Color3.fromRGB(18, 18, 22),
+                    BackgroundTransparency = 0.22,
                     Text = "",
                     AutoButtonColor = false,
                     Active = true,
@@ -186,16 +217,16 @@ local function addVisibilityAPI(obj, frame)
                     AnchorPoint = Vector2.new(0.5, 0.5),
                     BackgroundTransparency = 1,
                     Text = customText or "PATCHED",
-                    TextColor3 = Color3.fromRGB(255, 60, 60),
+                    TextColor3 = Color3.fromRGB(238, 168, 82),
                     TextScaled = true,
                     TextWrapped = true,
-                    Font = Enum.Font.GothamBlack,
-                    Rotation = -5,
+                    Font = Enum.Font.GothamBold,
+                    Rotation = 0,
                     ZIndex = 51,
                     Parent = overlay
                 })
-                make("UITextSizeConstraint", { MaxTextSize = math.floor(28 * SC), MinTextSize = 1, Parent = txt })
-                make("UIStroke", { Color = Color3.fromRGB(0,0,0), Thickness = 1.5, Parent = txt })
+                make("UITextSizeConstraint", { MaxTextSize = math.floor(15 * SC), MinTextSize = 1, Parent = txt })
+                make("UIStroke", { Color = Color3.fromRGB(0,0,0), Thickness = 1, Transparency = 0.55, Parent = txt })
                 self._patchedOverlay = overlay
             else
                 self._patchedOverlay.Visible = true
@@ -2419,12 +2450,28 @@ function Section:AddSlider(id, cfg)
     make("UICorner",{CornerRadius=UDim.new(1,0),Parent=sliderKnob})
     make("UIStroke",{Color=thm.SliderFill,Thickness=2,Parent=sliderKnob})
     local knobScale = make("UIScale",{Scale=1,Parent=sliderKnob})
+    local valTip = make("Frame", {
+        AutomaticSize = Enum.AutomaticSize.X, Size = ss(0, 22),
+        AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, 0, 0, -s(12)),
+        BackgroundColor3 = thm.Element, BackgroundTransparency = 1,
+        ZIndex = 20, Visible = false, Parent = tr,
+    })
+    make("UICorner", { CornerRadius = sz(6), Parent = valTip })
+    make("UIPadding", { PaddingLeft = sz(8), PaddingRight = sz(8), Parent = valTip })
+    local valTipStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Transparency = 1, Parent = valTip })
+    local valTipTxt = make("TextLabel", {
+        AutomaticSize = Enum.AutomaticSize.X, Size = UDim2.new(0, 0, 1, 0),
+        BackgroundTransparency = 1, Text = "", TextColor3 = thm.Text, TextTransparency = 1,
+        TextSize = fs(11), Font = Enum.Font.GothamBold, ZIndex = 21, Parent = valTip,
+    })
     local function update(x)
         local r=math.clamp((x-tr.AbsolutePosition.X)/tr.AbsoluteSize.X,0,1)
         local raw=min+(max-min)*r
         local val=dec==0 and math.floor(raw+.5) or math.floor(raw*(10^dec)+.5)/(10^dec)
         obj.Value=val; fill.Size=UDim2.new(r,0,1,0)
         sliderKnob.Position=UDim2.new(r,0,0.5,0)
+        valTip.Position = UDim2.new(r, 0, 0, -s(12))
+        valTipTxt.Text = tostring(val)..(cfg.Suffix or "")
         valBox.Text=tostring(val)..(cfg.Suffix or "")
         if cfg.Callback then pcall(cfg.Callback,val) end
         triggerAutosave()
@@ -2438,6 +2485,10 @@ function Section:AddSlider(id, cfg)
         if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
             drag=true; update(i.Position.X)
             tw(knobScale,{Scale=1.3},0.1,Enum.EasingStyle.Back)
+            valTip.Visible = true
+            tw(valTip, { BackgroundTransparency = 0.05 }, 0.12)
+            tw(valTipStroke, { Transparency = 0.4 }, 0.12)
+            tw(valTipTxt, { TextTransparency = 0 }, 0.12)
         end
     end)
     local sliderChanged = UserInputService.InputChanged:Connect(function(i) if drag and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then update(i.Position.X) end end)
@@ -2445,6 +2496,10 @@ function Section:AddSlider(id, cfg)
         if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
             drag=false
             tw(knobScale,{Scale=1},0.12,Enum.EasingStyle.Back)
+            tw(valTip, { BackgroundTransparency = 1 }, 0.15)
+            tw(valTipStroke, { Transparency = 1 }, 0.15)
+            tw(valTipTxt, { TextTransparency = 1 }, 0.15)
+            task.delay(0.16, function() if not drag then valTip.Visible = false end end)
         end
     end)
     if self._tab and self._tab._window and self._tab._window._connections then
@@ -3171,16 +3226,16 @@ function Column:AddSection(title, cfg)
     make("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=sz(7),Parent=f})
     local headerFrame=make(Aurora.FadeIn and "CanvasGroup" or "Frame",{Size=UDim2.new(1,0,0,s(22)),BackgroundTransparency=1,Parent=f})
     local accentDot = make("Frame",{
-        Size=UDim2.fromOffset(s(3),s(3)),
-        AnchorPoint=Vector2.new(0,0.5), Position=UDim2.new(0,0,0.5,-s(3)),
+        Size=UDim2.fromOffset(s(3),s(12)),
+        AnchorPoint=Vector2.new(0,0.5), Position=UDim2.new(0,0,0.5,-s(1)),
         BackgroundColor3=Aurora.Theme.Accent,
         BorderSizePixel=0, Parent=headerFrame,
     })
     make("UICorner",{CornerRadius=UDim.new(1,0),Parent=accentDot})
     reg(accentDot,"BackgroundColor3","Accent")
     local titleLbl = make("TextLabel",{
-        Size=UDim2.new(1,-s(8),1,-s(4)),
-        Position=UDim2.new(0,s(8),0,0),
+        Size=UDim2.new(1,-s(11),1,-s(4)),
+        Position=UDim2.new(0,s(11),0,0),
         BackgroundTransparency=1,
         Text=title,
         TextColor3=Aurora.Theme.Accent,
@@ -3375,6 +3430,8 @@ function Tab:AddSubTab(title)
             tw(other.Button, { BackgroundTransparency = 1, TextColor3 = currentThm.TabInactive }, 0.18)
         end
         subPage.Visible=true
+        subPage.Position = UDim2.new(0, 0, 0.03, 0)
+        tw(subPage, { Position = UDim2.new(0, 0, 0, 0) }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         setActive(true)
     end
     subBtn.MouseButton1Click:Connect(function() subTabObj:Select() end)
@@ -3423,6 +3480,9 @@ function Aurora:CreateWindow(cfg)
     Aurora.DelayPerTab = cfg.DelayPerTab or 0.25
     Aurora.DelayPerSection = cfg.DelayPerSection or 0.15
     Aurora.DelayPerElement = cfg.DelayPerElement or 0.05
+    if cfg.AutoExecute then
+        pcall(function() Aurora:SetupAutoExecute(cfg.AutoExecute, cfg.AutoExecuteName) end)
+    end
     local thm=self.Theme
     local winConnections = {}
     local gui=make("ScreenGui",{Name="AuroraLib",ResetOnSpawn=false,DisplayOrder=9998,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
@@ -3539,10 +3599,30 @@ function Aurora:CreateWindow(cfg)
     local searchIco=make("ImageLabel",{Size=ss(13,13),Position=UDim2.new(0,s(9),0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundTransparency=1,Parent=searchFrame})
     applyIcon(searchIco,"solar/magnifer-linear",thm.SubText)
     local searchBox=make("TextBox",{
-        Size=UDim2.new(1,-s(30),1,0),Position=UDim2.new(0,s(26),0,0),
+        Size=UDim2.new(1,-s(48),1,0),Position=UDim2.new(0,s(26),0,0),
         BackgroundTransparency=1,PlaceholderText="Search tabs...",PlaceholderColor3=thm.SubText,
         Text="",TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=searchFrame,
     })
+    local searchClear = make("TextButton", {
+        Size = ss(18,18), AnchorPoint = Vector2.new(1,0.5), Position = UDim2.new(1,-s(7),0.5,0),
+        BackgroundColor3 = thm.Element, BackgroundTransparency = 0.4, Text = "",
+        AutoButtonColor = false, Visible = false, ZIndex = 3, Parent = searchFrame,
+    })
+    make("UICorner", { CornerRadius = UDim.new(1,0), Parent = searchClear })
+    local searchClearIco = make("ImageLabel", {
+        Size = ss(10,10), AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.5),
+        BackgroundTransparency = 1, Parent = searchClear,
+    })
+    applyIcon(searchClearIco, "solar/close-circle-bold", thm.SubText)
+    searchClear.MouseButton1Click:Connect(function()
+        searchBox.Text = ""
+        pcall(function() searchBox:CaptureFocus() end)
+    end)
+    searchClear.MouseEnter:Connect(function() if _isMobile then return end tw(searchClear, { BackgroundTransparency = 0.15 }, 0.1) end)
+    searchClear.MouseLeave:Connect(function() if _isMobile then return end tw(searchClear, { BackgroundTransparency = 0.4 }, 0.1) end)
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        searchClear.Visible = searchBox.Text ~= ""
+    end)
     local tabScroll=make("ScrollingFrame",{
         Size=UDim2.new(1,0,1,-s(194)),Position=UDim2.new(0,0,0,s(150)),
         BackgroundTransparency=1,ScrollBarThickness=_isMobile and s(6) or s(2),ScrollBarImageColor3=thm.Scrollbar,Parent=sidebar,
@@ -3825,6 +3905,7 @@ function Aurora:CreateWindow(cfg)
         toggling = true
         if state then
             visible = true
+            gui.Enabled = true
             main.Visible = true
             canvas.Visible = true
             resizeOverlay.Visible = not minimized
@@ -3848,6 +3929,9 @@ function Aurora:CreateWindow(cfg)
                 main.Position = rest
                 visible = false
                 toggling = false
+                -- Deshabilitar el ScreenGui al ocultar: deja de capturar clicks
+                -- (asi puedes mover la camara donde antes estaba la GUI).
+                gui.Enabled = false
             end)
         end
     end
@@ -4098,6 +4182,10 @@ function Aurora:CreateWindow(cfg)
     local activeTab=nil
     searchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local query = searchBox.Text:lower():match("^%s*(.-)%s*$")
+        win._searchToken = (win._searchToken or 0) + 1
+        local _stok = win._searchToken
+        task.wait(0.06)
+        if win._searchToken ~= _stok then return end
         if not win._searchDropdown then
             local drop = make("ScrollingFrame", {
                 Name = "SearchDrop",
@@ -4589,7 +4677,7 @@ function Aurora:CreateWindow(cfg)
     function win:Destroy()
         pcall(function() gui:Destroy() end)
     end
-    -- ===== Animacion de carga / intro =====
+    -- ===== Animacion de carga / intro (premium) =====
     if cfg.LoadingScreen ~= false then
         visible = false
         canvas.GroupTransparency = 1
@@ -4597,91 +4685,173 @@ function Aurora:CreateWindow(cfg)
         mainStroke.Transparency = 1
         resizeOverlay.Visible = false
         task.spawn(function()
+            local accent = thm.Accent
             local loadGui = make("ScreenGui", {
                 Name = "AuroraLoadingGui", ResetOnSpawn = false, IgnoreGuiInset = true,
                 DisplayOrder = 100001, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
             })
             safeParent(loadGui)
             local dim = make("Frame", {
-                Size = UDim2.fromScale(1,1), BackgroundColor3 = Color3.fromRGB(6,6,9),
+                Size = UDim2.fromScale(1,1), BackgroundColor3 = Color3.fromRGB(5,5,8),
                 BackgroundTransparency = 1, BorderSizePixel = 0, Parent = loadGui,
             })
-            make("UIGradient", { Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(14,14,20)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(5,5,8)) }), Rotation = 90, Parent = dim })
+            local dimGrad = make("UIGradient", { Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(16,16,24)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8,8,12)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(4,4,6)) }), Rotation = 90, Parent = dim })
+            local particles = {}
+            for i = 1, 7 do
+                local p = make("Frame", {
+                    Size = ss(3,3), AnchorPoint = Vector2.new(0.5,0.5),
+                    BackgroundColor3 = accent, BackgroundTransparency = 1, BorderSizePixel = 0, Parent = dim,
+                })
+                make("UICorner", { CornerRadius = UDim.new(1,0), Parent = p })
+                particles[i] = p
+            end
             local card = make("Frame", {
-                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.52),
-                Size = ss(260,150), BackgroundTransparency = 1, Parent = dim,
+                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.5),
+                Size = ss(280,170), BackgroundTransparency = 1, Parent = dim,
             })
-            local ring = make("Frame", {
+            local glow = make("ImageLabel", {
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(-6)),
+                Size = ss(96,96), BackgroundTransparency = 1,
+                Image = "rbxassetid://6014261993", ImageColor3 = accent, ImageTransparency = 1, Parent = card,
+            })
+            local ringOuter = make("Frame", {
                 AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,0),
-                Size = ss(46,46), BackgroundTransparency = 1, Parent = card,
+                Size = ss(56,56), BackgroundTransparency = 1, Parent = card,
             })
-            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = ring })
-            local ringStroke = make("UIStroke", { Thickness = s(3), Color = thm.Accent, Transparency = 1, Parent = ring })
+            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = ringOuter })
+            local ringOuterStroke = make("UIStroke", { Thickness = s(3), Color = accent, Transparency = 1, Parent = ringOuter })
             make("UIGradient", { Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(0.5,0.25),
-                NumberSequenceKeypoint.new(0.75,1), NumberSequenceKeypoint.new(1,1) }), Parent = ringStroke })
+                NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(0.45,0.35),
+                NumberSequenceKeypoint.new(0.7,1), NumberSequenceKeypoint.new(1,1) }), Parent = ringOuterStroke })
+            local ringInner = make("Frame", {
+                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.5),
+                Size = ss(40,40), BackgroundTransparency = 1, Parent = ringOuter,
+            })
+            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = ringInner })
+            local ringInnerStroke = make("UIStroke", { Thickness = s(2), Color = thm.Text, Transparency = 1, Parent = ringInner })
+            make("UIGradient", { Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(0.4,1),
+                NumberSequenceKeypoint.new(0.6,0.5), NumberSequenceKeypoint.new(1,0.2) }), Parent = ringInnerStroke })
             local logo = make("ImageLabel", {
-                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.new(0.5,0,0,s(23)),
-                Size = ss(22,22), BackgroundTransparency = 1, ImageTransparency = 1, Parent = card,
+                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.new(0.5,0,0,s(28)),
+                Size = ss(24,24), BackgroundTransparency = 1, ImageTransparency = 1, Parent = card,
             })
-            applyIcon(logo, cfg.LoadingIcon or cfg.Icon or "solar/star-bold", thm.Accent)
+            applyIcon(logo, cfg.LoadingIcon or cfg.Icon or "solar/star-bold", accent)
             local titleLbl = make("TextLabel", {
-                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(64)),
-                Size = ss(260,22), BackgroundTransparency = 1, Text = cfg.Title or "Aurora",
-                TextColor3 = thm.Text, TextTransparency = 1, TextSize = fs(18), Font = Enum.Font.GothamBlack, Parent = card,
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(70)),
+                Size = ss(280,24), BackgroundTransparency = 1, Text = cfg.Title or "Aurora",
+                TextColor3 = thm.Text, TextTransparency = 1, TextSize = fs(20), Font = Enum.Font.GothamBlack, Parent = card,
             })
+            local titleScale = make("UIScale", { Scale = 0.85, Parent = titleLbl })
             local subLbl = make("TextLabel", {
-                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(88)),
-                Size = ss(260,16), BackgroundTransparency = 1, Text = cfg.LoadingText or cfg.SubTitle or "Loading...",
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(96)),
+                Size = ss(280,16), BackgroundTransparency = 1, Text = cfg.LoadingText or cfg.SubTitle or "Loading...",
                 TextColor3 = thm.SubText, TextTransparency = 1, TextSize = fs(11), Font = Enum.Font.Gotham, Parent = card,
             })
             local barBG = make("Frame", {
-                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(116)),
-                Size = ss(200,4), BackgroundColor3 = thm.Element, BackgroundTransparency = 1, BorderSizePixel = 0, Parent = card,
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(126)),
+                Size = ss(210,4), BackgroundColor3 = thm.Element, BackgroundTransparency = 1, BorderSizePixel = 0, Parent = card,
             })
             make("UICorner", { CornerRadius = UDim.new(1,0), Parent = barBG })
             local barFill = make("Frame", {
-                Size = UDim2.new(0,0,1,0), BackgroundColor3 = thm.Accent,
+                Size = UDim2.new(0,0,1,0), BackgroundColor3 = accent,
                 BackgroundTransparency = 1, BorderSizePixel = 0, Parent = barBG,
             })
             make("UICorner", { CornerRadius = UDim.new(1,0), Parent = barFill })
-            tw(dim, { BackgroundTransparency = 0.05 }, 0.3)
-            tw(ringStroke, { Transparency = 0 }, 0.35)
-            tw(logo, { ImageTransparency = 0 }, 0.35)
-            tw(titleLbl, { TextTransparency = 0 }, 0.4)
-            tw(subLbl, { TextTransparency = 0 }, 0.4)
-            tw(barBG, { BackgroundTransparency = 0.6 }, 0.4)
-            tw(barFill, { BackgroundTransparency = 0 }, 0.4)
-            local spinning = true
+            make("UIGradient", { Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, accent),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255)) }),
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0) }), Parent = barFill })
+            local pctLbl = make("TextLabel", {
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(136)),
+                Size = ss(80,14), BackgroundTransparency = 1, Text = "0%",
+                TextColor3 = thm.SubText, TextTransparency = 1, TextSize = fs(10), Font = Enum.Font.GothamBold, Parent = card,
+            })
+            tw(dim, { BackgroundTransparency = 0 }, 0.35)
+            tw(glow, { ImageTransparency = 0.55 }, 0.5)
+            tw(ringOuterStroke, { Transparency = 0 }, 0.4)
+            tw(ringInnerStroke, { Transparency = 0 }, 0.4)
+            tw(logo, { ImageTransparency = 0 }, 0.4)
+            tw(titleLbl, { TextTransparency = 0 }, 0.45)
+            tw(titleScale, { Scale = 1 }, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            tw(subLbl, { TextTransparency = 0 }, 0.5)
+            tw(barBG, { BackgroundTransparency = 0.55 }, 0.45)
+            tw(pctLbl, { TextTransparency = 0 }, 0.5)
+            tw(barFill, { BackgroundTransparency = 0 }, 0.45)
+            local running = true
             task.spawn(function()
-                while spinning and ring and ring.Parent do
-                    ring.Rotation = (ring.Rotation + 7) % 360
+                local t = 0
+                while running and ringOuter and ringOuter.Parent do
+                    t = t + 1
+                    ringOuter.Rotation = (ringOuter.Rotation + 4) % 360
+                    ringInner.Rotation = (ringInner.Rotation - 6) % 360
+                    if dimGrad then dimGrad.Rotation = 90 + math.sin(t*0.012)*12 end
                     task.wait()
                 end
             end)
             task.spawn(function()
-                while spinning and logo and logo.Parent do
-                    local a = tw(logo, { Size = ss(26,26) }, 0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-                    a.Completed:Wait()
-                    if not spinning then break end
-                    local b = tw(logo, { Size = ss(22,22) }, 0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-                    b.Completed:Wait()
+                while running and glow and glow.Parent do
+                    local a = tw(glow, { ImageTransparency = 0.35, Size = ss(104,104) }, 0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); a.Completed:Wait()
+                    if not running then break end
+                    local b = tw(glow, { ImageTransparency = 0.6, Size = ss(92,92) }, 0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); b.Completed:Wait()
                 end
             end)
-            local dur = cfg.LoadingDuration or 1.8
-            tw(barFill, { Size = UDim2.new(1,0,1,0) }, dur, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-            task.wait(dur + 0.15)
-            spinning = false
-            tw(dim, { BackgroundTransparency = 1 }, 0.35)
-            tw(ringStroke, { Transparency = 1 }, 0.3)
+            task.spawn(function()
+                while running and logo and logo.Parent do
+                    local a = tw(logo, { Size = ss(27,27) }, 0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); a.Completed:Wait()
+                    if not running then break end
+                    local b = tw(logo, { Size = ss(23,23) }, 0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); b.Completed:Wait()
+                end
+            end)
+            for _, p in ipairs(particles) do
+                task.spawn(function()
+                    while running and p and p.Parent do
+                        local startX = math.random(10, 90)/100
+                        p.Position = UDim2.new(startX, 0, 1.05, 0)
+                        p.BackgroundTransparency = 1
+                        local sz2 = math.random(2,4)
+                        p.Size = ss(sz2, sz2)
+                        local riseTime = math.random(25, 45)/10
+                        tw(p, { BackgroundTransparency = 0.4 }, 0.6)
+                        local up = tw(p, { Position = UDim2.new(startX, math.random(-20,20), -0.05, 0) }, riseTime, Enum.EasingStyle.Linear)
+                        task.wait(riseTime*0.7)
+                        if not running then break end
+                        tw(p, { BackgroundTransparency = 1 }, riseTime*0.3)
+                        up.Completed:Wait()
+                    end
+                end)
+            end
+            local dur = cfg.LoadingDuration or 2.0
+            local t0 = tick()
+            while running and tick() - t0 < dur do
+                local prog = math.clamp((tick()-t0)/dur, 0, 1)
+                local e = 1 - (1-prog)^3
+                barFill.Size = UDim2.new(e, 0, 1, 0)
+                pctLbl.Text = string.format("%d%%", math.floor(e*100 + 0.5))
+                task.wait()
+            end
+            barFill.Size = UDim2.new(1,0,1,0)
+            pctLbl.Text = "100%"
+            tw(ringOuterStroke, { Color = Color3.fromRGB(255,255,255), Thickness = s(4) }, 0.15)
+            tw(glow, { ImageTransparency = 0.12, Size = ss(122,122) }, 0.25)
+            task.wait(0.18)
+            running = false
+            tw(dim, { BackgroundTransparency = 1 }, 0.4)
+            tw(glow, { ImageTransparency = 1 }, 0.35)
+            tw(ringOuterStroke, { Transparency = 1 }, 0.3)
+            tw(ringInnerStroke, { Transparency = 1 }, 0.3)
             tw(logo, { ImageTransparency = 1 }, 0.3)
             tw(titleLbl, { TextTransparency = 1 }, 0.3)
             tw(subLbl, { TextTransparency = 1 }, 0.3)
             tw(barBG, { BackgroundTransparency = 1 }, 0.3)
             tw(barFill, { BackgroundTransparency = 1 }, 0.3)
-            task.wait(0.16)
+            tw(pctLbl, { TextTransparency = 1 }, 0.3)
+            for _, p in ipairs(particles) do tw(p, { BackgroundTransparency = 1 }, 0.3) end
+            task.wait(0.2)
             pcall(function() win:SetVisible(true) end)
             Aurora:PlaySound("Open")
             task.wait(0.5)
@@ -6606,7 +6776,7 @@ function KeySystem.new(cfg)
     end
     addBtnEffect(verifyBtn, thm.Accent, thm.AccentDim)
     addBtnEffect(getBtn, thm.Element, thm.ElementHover)
-    verifyBtn.MouseButton1Click:Connect(function()
+    local function doVerify()
         local inputKey = textBox.Text:gsub("%s+", "")
         if inputKey == "" then
             statusLbl.TextColor3 = thm.AlertError
@@ -6630,8 +6800,18 @@ function KeySystem.new(cfg)
         else
             statusLbl.TextColor3 = thm.AlertError
             statusLbl.Text = "Invalid Key! Please try again."
+            local _bp = mainFrame.Position
+            pcall(function() tw(inputStroke, { Color = thm.AlertError, Thickness = 1.5 }, 0.1) end)
+            for _, _dx in ipairs({ -10, 9, -7, 5, -3, 0 }) do
+                local _sh = tw(mainFrame, { Position = _bp + UDim2.fromOffset(_dx, 0) }, 0.045)
+                _sh.Completed:Wait()
+            end
+            mainFrame.Position = _bp
+            task.delay(0.9, function() pcall(function() tw(inputStroke, { Color = thm.Border, Thickness = 1 }, 0.2) end) end)
         end
-    end)
+    end
+    verifyBtn.MouseButton1Click:Connect(doVerify)
+    textBox.FocusLost:Connect(function(enter) if enter then doVerify() end end)
     getBtn.MouseButton1Click:Connect(function()
         if self.KeyLink ~= "" then
             pcall(function()
@@ -6651,6 +6831,14 @@ function KeySystem.new(cfg)
         end
     end)
     return self
+end
+function KeySystem.GetHWID()
+    local id = "UNKNOWN"
+    pcall(function()
+        if gethwid then id = tostring(gethwid())
+        else id = tostring(game:GetService("RbxAnalyticsService"):GetClientId()) end
+    end)
+    return id
 end
 Aurora.KeySystem = KeySystem
 local HUD = {}
