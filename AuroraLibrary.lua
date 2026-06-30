@@ -1525,6 +1525,7 @@ function Aurora:Notify(cfg)
         pcall(function() endedConn:Disconnect() end)
     end)
     local autoCloseThread
+    local pTween
     local function startAutoClose(customDur)
         if autoCloseThread then
             pcall(task.cancel, autoCloseThread)
@@ -1533,7 +1534,7 @@ function Aurora:Notify(cfg)
         local d = customDur or dur
         if d and d > 0 then
             pFill.Size = UDim2.new(1, 0, 1, 0)
-            tw(pFill, { Size = UDim2.new(0, 0, 1, 0) }, d, Enum.EasingStyle.Linear)
+            pTween = tw(pFill, { Size = UDim2.new(0, 0, 1, 0) }, d, Enum.EasingStyle.Linear)
             autoCloseThread = task.delay(d, function()
                 if not closed then closeNotif() end
             end)
@@ -1629,6 +1630,22 @@ function Aurora:Notify(cfg)
     function controller:Close()
         closeNotif()
     end
+    card.MouseEnter:Connect(function()
+        if _isMobile or closed then return end
+        if autoCloseThread then pcall(task.cancel, autoCloseThread); autoCloseThread = nil end
+        if pTween then pcall(function() pTween:Cancel() end) end
+    end)
+    card.MouseLeave:Connect(function()
+        if _isMobile or closed then return end
+        local total = dur
+        if not total or total <= 0 then return end
+        local ratio = math.clamp(pFill.Size.X.Scale, 0, 1)
+        local remaining = total * ratio
+        if remaining <= 0.05 then closeNotif(); return end
+        pTween = tw(pFill, { Size = UDim2.new(0, 0, 1, 0) }, remaining, Enum.EasingStyle.Linear)
+        if autoCloseThread then pcall(task.cancel, autoCloseThread) end
+        autoCloseThread = task.delay(remaining, function() if not closed then closeNotif() end end)
+    end)
     local notifObj = {
         Card = card,
         Show = function()
@@ -2467,7 +2484,13 @@ function Section:AddSlider(id, cfg)
     local function update(x)
         local r=math.clamp((x-tr.AbsolutePosition.X)/tr.AbsoluteSize.X,0,1)
         local raw=min+(max-min)*r
-        local val=dec==0 and math.floor(raw+.5) or math.floor(raw*(10^dec)+.5)/(10^dec)
+        local val
+        if cfg.Step and cfg.Step > 0 then
+            val = min + math.floor(((raw - min)/cfg.Step) + 0.5) * cfg.Step
+        else
+            val = dec==0 and math.floor(raw+.5) or math.floor(raw*(10^dec)+.5)/(10^dec)
+        end
+        val = math.clamp(val, min, max)
         obj.Value=val; fill.Size=UDim2.new(r,0,1,0)
         sliderKnob.Position=UDim2.new(r,0,0.5,0)
         valTip.Position = UDim2.new(r, 0, 0, -s(12))
@@ -2511,6 +2534,7 @@ function Section:AddSlider(id, cfg)
         pcall(function() sliderEnded:Disconnect() end)
     end)
     function obj:SetValue(v)
+        if cfg.Step and cfg.Step > 0 then v = min + math.floor(((v - min)/cfg.Step) + 0.5) * cfg.Step end
         v=math.clamp(v,min,max); obj.Value=v
         local r=(v-min)/(max-min)
         fill.Size=UDim2.new(r,0,1,0)
@@ -2890,6 +2914,7 @@ function Section:AddDropdown(id, cfg)
             table.insert(optionButtons,{btn=optBtn,update=updateSelectState,value=val})
             updateSelectState()
         end
+        searchBox.Visible = #vals > (cfg.SearchThreshold or 6)
     end
     populateOptions(cfg.Values or {}); updateTxt()
     searchBox:GetPropertyChangedSignal("Text"):Connect(function()
@@ -2901,7 +2926,8 @@ function Section:AddDropdown(id, cfg)
     local function toggleDropdown()
         dropExpanded=not dropExpanded
         local elemCnt=math.min(6,#optionButtons)
-        local targetH=dropExpanded and (s(24)+s(3)+elemCnt*s(32)+s(8)) or 0
+        local _searchH = searchBox.Visible and (s(24)+s(3)) or 0
+        local targetH=dropExpanded and (_searchH+elemCnt*s(32)+s(8)) or 0
         tw(dropdownList,{Size=UDim2.new(1,0,0,targetH)},0.2)
         tw(arr,{Rotation=dropExpanded and 180 or 0},0.2)
     end
@@ -3138,6 +3164,13 @@ function Section:AddKeybind(id, cfg)
             end)
         end)
     end)
+    kbBtn.MouseButton2Click:Connect(function()
+        if binding then return end
+        updateKey(Enum.KeyCode.None)
+        active = false
+        updateVisualState()
+        if cfg.Callback then pcall(cfg.Callback, obj.Value, active) end
+    end)
     local keybindBegan = UserInputService.InputBegan:Connect(function(input,processed)
         if not processed and not binding then
             local isMatch = false
@@ -3149,10 +3182,10 @@ function Section:AddKeybind(id, cfg)
                 end
             end
             if isMatch then
-                active = true
+                if cfg.Mode == "Toggle" then active = not active else active = true end
                 updateVisualState()
                 if Aurora.RefreshKeybindList then task.defer(Aurora.RefreshKeybindList) end
-                if cfg.Callback then pcall(cfg.Callback,obj.Value) end
+                if cfg.Callback then pcall(cfg.Callback,obj.Value,active) end
             end
         end
     end)
@@ -3166,7 +3199,7 @@ function Section:AddKeybind(id, cfg)
                     isMatch = true
                 end
             end
-            if isMatch then
+            if isMatch and cfg.Mode ~= "Toggle" then
                 active = false
                 updateVisualState()
                 if Aurora.RefreshKeybindList then task.defer(Aurora.RefreshKeybindList) end
@@ -3576,8 +3609,19 @@ function Aurora:CreateWindow(cfg)
             end
         end)
     end)
-    local welcomeLbl = make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(13)),Position=UDim2.new(0,s(46),0,s(7)),BackgroundTransparency=1,Text="Welcome back,",TextColor3=thm.SubText,TextSize=fs(10),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=userPanel})
-    local userLbl = make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(15)),Position=UDim2.new(0,s(46),0,s(22)),BackgroundTransparency=1,Text=realName,TextColor3=thm.Text,TextSize=fs(16),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=userPanel})
+    local welcomeLbl = make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(12)),Position=UDim2.new(0,s(46),0,s(4)),BackgroundTransparency=1,Text="Welcome back,",TextColor3=thm.SubText,TextSize=fs(9),Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,Parent=userPanel})
+    local userLbl = make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(16)),Position=UDim2.new(0,s(46),0,s(14)),BackgroundTransparency=1,Text=realName,TextColor3=thm.Text,TextSize=fs(15),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=userPanel})
+    local _execName = "Unknown"
+    pcall(function()
+        if identifyexecutor then _execName = tostring((identifyexecutor()))
+        elseif getexecutorname then _execName = tostring((getexecutorname()))
+        elseif (syn and syn.request) then _execName = "Synapse X"
+        elseif fluxus then _execName = "Fluxus"
+        elseif KRNL_LOADED then _execName = "KRNL" end
+    end)
+    if _execName == nil or _execName == "" then _execName = "Unknown" end
+    local _platform = _isMobile and "Mobile" or "PC"
+    local execLbl = make("TextLabel",{Size=UDim2.new(1,-s(50),0,s(12)),Position=UDim2.new(0,s(46),0,s(32)),BackgroundTransparency=1,Text=_execName.." â¢ ".._platform,TextColor3=thm.Accent,TextSize=fs(9),Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=userPanel})
 
     userPanel.MouseButton1Click:Connect(function()
         profileHidden = not profileHidden
@@ -4677,7 +4721,7 @@ function Aurora:CreateWindow(cfg)
     function win:Destroy()
         pcall(function() gui:Destroy() end)
     end
-    -- ===== Animacion de carga / intro (premium) =====
+    -- ===== Animacion de carga / intro (minimal / elegante) =====
     if cfg.LoadingScreen ~= false then
         visible = false
         canvas.GroupTransparency = 1
@@ -4692,68 +4736,57 @@ function Aurora:CreateWindow(cfg)
             })
             safeParent(loadGui)
             local dim = make("Frame", {
-                Size = UDim2.fromScale(1,1), BackgroundColor3 = Color3.fromRGB(5,5,8),
+                Size = UDim2.fromScale(1,1), BackgroundColor3 = Color3.fromRGB(8,8,11),
                 BackgroundTransparency = 1, BorderSizePixel = 0, Parent = loadGui,
             })
-            local dimGrad = make("UIGradient", { Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(16,16,24)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8,8,12)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(4,4,6)) }), Rotation = 90, Parent = dim })
-            local particles = {}
-            for i = 1, 7 do
-                local p = make("Frame", {
-                    Size = ss(3,3), AnchorPoint = Vector2.new(0.5,0.5),
-                    BackgroundColor3 = accent, BackgroundTransparency = 1, BorderSizePixel = 0, Parent = dim,
-                })
-                make("UICorner", { CornerRadius = UDim.new(1,0), Parent = p })
-                particles[i] = p
-            end
+            make("UIGradient", { Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(15,15,21)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(6,6,9)) }), Rotation = 90, Parent = dim })
             local card = make("Frame", {
                 AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.5),
-                Size = ss(280,170), BackgroundTransparency = 1, Parent = dim,
+                Size = ss(300,150), BackgroundTransparency = 1, Parent = dim,
             })
+            -- glow suave detras del logo
             local glow = make("ImageLabel", {
-                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(-6)),
-                Size = ss(96,96), BackgroundTransparency = 1,
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(-12)),
+                Size = ss(108,108), BackgroundTransparency = 1,
                 Image = "rbxassetid://6014261993", ImageColor3 = accent, ImageTransparency = 1, Parent = card,
             })
-            local ringOuter = make("Frame", {
+            -- un unico anillo fino
+            local ring = make("Frame", {
                 AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,0),
-                Size = ss(56,56), BackgroundTransparency = 1, Parent = card,
+                Size = ss(54,54), BackgroundTransparency = 1, Parent = card,
             })
-            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = ringOuter })
-            local ringOuterStroke = make("UIStroke", { Thickness = s(3), Color = accent, Transparency = 1, Parent = ringOuter })
+            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = ring })
+            local ringStroke = make("UIStroke", { Thickness = s(2), Color = accent, Transparency = 1, Parent = ring })
             make("UIGradient", { Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(0.45,0.35),
-                NumberSequenceKeypoint.new(0.7,1), NumberSequenceKeypoint.new(1,1) }), Parent = ringOuterStroke })
-            local ringInner = make("Frame", {
-                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.5),
-                Size = ss(40,40), BackgroundTransparency = 1, Parent = ringOuter,
-            })
-            make("UICorner", { CornerRadius = UDim.new(1,0), Parent = ringInner })
-            local ringInnerStroke = make("UIStroke", { Thickness = s(2), Color = thm.Text, Transparency = 1, Parent = ringInner })
-            make("UIGradient", { Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(0.4,1),
-                NumberSequenceKeypoint.new(0.6,0.5), NumberSequenceKeypoint.new(1,0.2) }), Parent = ringInnerStroke })
+                NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(0.4,0.4),
+                NumberSequenceKeypoint.new(0.7,1), NumberSequenceKeypoint.new(1,1) }), Parent = ringStroke })
             local logo = make("ImageLabel", {
-                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.new(0.5,0,0,s(28)),
-                Size = ss(24,24), BackgroundTransparency = 1, ImageTransparency = 1, Parent = card,
+                AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.new(0.5,0,0,s(27)),
+                Size = ss(22,22), BackgroundTransparency = 1, ImageTransparency = 1, Parent = card,
             })
             applyIcon(logo, cfg.LoadingIcon or cfg.Icon or "solar/star-bold", accent)
+            -- titulo con shimmer
             local titleLbl = make("TextLabel", {
-                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(70)),
-                Size = ss(280,24), BackgroundTransparency = 1, Text = cfg.Title or "Aurora",
-                TextColor3 = thm.Text, TextTransparency = 1, TextSize = fs(20), Font = Enum.Font.GothamBlack, Parent = card,
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(72)),
+                Size = ss(300,26), BackgroundTransparency = 1, Text = cfg.Title or "Aurora",
+                TextColor3 = Color3.fromRGB(255,255,255), TextTransparency = 1, TextSize = fs(21), Font = Enum.Font.GothamBlack, Parent = card,
             })
-            local titleScale = make("UIScale", { Scale = 0.85, Parent = titleLbl })
+            local titleGrad = make("UIGradient", { Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(150,150,160)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(150,150,160)) }), Offset = Vector2.new(-1,0), Parent = titleLbl })
+            local titleScale = make("UIScale", { Scale = 0.9, Parent = titleLbl })
             local subLbl = make("TextLabel", {
-                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(96)),
-                Size = ss(280,16), BackgroundTransparency = 1, Text = cfg.LoadingText or cfg.SubTitle or "Loading...",
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(99)),
+                Size = ss(300,15), BackgroundTransparency = 1, Text = cfg.LoadingText or cfg.SubTitle or "Loading...",
                 TextColor3 = thm.SubText, TextTransparency = 1, TextSize = fs(11), Font = Enum.Font.Gotham, Parent = card,
             })
+            -- linea de progreso minimalista
             local barBG = make("Frame", {
                 AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(126)),
-                Size = ss(210,4), BackgroundColor3 = thm.Element, BackgroundTransparency = 1, BorderSizePixel = 0, Parent = card,
+                Size = ss(220,2), BackgroundColor3 = thm.Element, BackgroundTransparency = 1, BorderSizePixel = 0, Parent = card,
             })
             make("UICorner", { CornerRadius = UDim.new(1,0), Parent = barBG })
             local barFill = make("Frame", {
@@ -4761,70 +4794,51 @@ function Aurora:CreateWindow(cfg)
                 BackgroundTransparency = 1, BorderSizePixel = 0, Parent = barBG,
             })
             make("UICorner", { CornerRadius = UDim.new(1,0), Parent = barFill })
-            make("UIGradient", { Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, accent),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255)) }),
-                Transparency = NumberSequence.new({
-                    NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0) }), Parent = barFill })
             local pctLbl = make("TextLabel", {
-                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(136)),
-                Size = ss(80,14), BackgroundTransparency = 1, Text = "0%",
-                TextColor3 = thm.SubText, TextTransparency = 1, TextSize = fs(10), Font = Enum.Font.GothamBold, Parent = card,
+                AnchorPoint = Vector2.new(0.5,0), Position = UDim2.new(0.5,0,0,s(134)),
+                Size = ss(80,12), BackgroundTransparency = 1, Text = "0%",
+                TextColor3 = thm.SubText, TextTransparency = 1, TextSize = fs(9), Font = Enum.Font.GothamBold, Parent = card,
             })
-            tw(dim, { BackgroundTransparency = 0 }, 0.35)
-            tw(glow, { ImageTransparency = 0.55 }, 0.5)
-            tw(ringOuterStroke, { Transparency = 0 }, 0.4)
-            tw(ringInnerStroke, { Transparency = 0 }, 0.4)
-            tw(logo, { ImageTransparency = 0 }, 0.4)
-            tw(titleLbl, { TextTransparency = 0 }, 0.45)
-            tw(titleScale, { Scale = 1 }, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            -- fade in suave y escalonado
+            tw(dim, { BackgroundTransparency = 0 }, 0.4)
+            task.wait(0.1)
+            tw(glow, { ImageTransparency = 0.6 }, 0.6)
+            tw(ringStroke, { Transparency = 0 }, 0.5)
+            tw(logo, { ImageTransparency = 0 }, 0.5)
+            task.wait(0.08)
+            tw(titleLbl, { TextTransparency = 0 }, 0.5)
+            tw(titleScale, { Scale = 1 }, 0.55, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            task.wait(0.05)
             tw(subLbl, { TextTransparency = 0 }, 0.5)
-            tw(barBG, { BackgroundTransparency = 0.55 }, 0.45)
+            tw(barBG, { BackgroundTransparency = 0.6 }, 0.5)
             tw(pctLbl, { TextTransparency = 0 }, 0.5)
-            tw(barFill, { BackgroundTransparency = 0 }, 0.45)
+            tw(barFill, { BackgroundTransparency = 0 }, 0.5)
             local running = true
+            -- giro suave del anillo + pulso del glow
             task.spawn(function()
-                local t = 0
-                while running and ringOuter and ringOuter.Parent do
-                    t = t + 1
-                    ringOuter.Rotation = (ringOuter.Rotation + 4) % 360
-                    ringInner.Rotation = (ringInner.Rotation - 6) % 360
-                    if dimGrad then dimGrad.Rotation = 90 + math.sin(t*0.012)*12 end
+                while running and ring and ring.Parent do
+                    ring.Rotation = (ring.Rotation + 3) % 360
                     task.wait()
                 end
             end)
             task.spawn(function()
                 while running and glow and glow.Parent do
-                    local a = tw(glow, { ImageTransparency = 0.35, Size = ss(104,104) }, 0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); a.Completed:Wait()
+                    local a = tw(glow, { ImageTransparency = 0.42, Size = ss(116,116) }, 1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); a.Completed:Wait()
                     if not running then break end
-                    local b = tw(glow, { ImageTransparency = 0.6, Size = ss(92,92) }, 0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); b.Completed:Wait()
+                    local b = tw(glow, { ImageTransparency = 0.62, Size = ss(104,104) }, 1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); b.Completed:Wait()
                 end
             end)
+            -- shimmer del titulo (barrido del degradado)
             task.spawn(function()
-                while running and logo and logo.Parent do
-                    local a = tw(logo, { Size = ss(27,27) }, 0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); a.Completed:Wait()
+                while running and titleGrad and titleLbl and titleLbl.Parent do
+                    titleGrad.Offset = Vector2.new(-1, 0)
+                    local sw = tw(titleGrad, { Offset = Vector2.new(1, 0) }, 1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+                    sw.Completed:Wait()
                     if not running then break end
-                    local b = tw(logo, { Size = ss(23,23) }, 0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut); b.Completed:Wait()
+                    task.wait(0.5)
                 end
             end)
-            for _, p in ipairs(particles) do
-                task.spawn(function()
-                    while running and p and p.Parent do
-                        local startX = math.random(10, 90)/100
-                        p.Position = UDim2.new(startX, 0, 1.05, 0)
-                        p.BackgroundTransparency = 1
-                        local sz2 = math.random(2,4)
-                        p.Size = ss(sz2, sz2)
-                        local riseTime = math.random(25, 45)/10
-                        tw(p, { BackgroundTransparency = 0.4 }, 0.6)
-                        local up = tw(p, { Position = UDim2.new(startX, math.random(-20,20), -0.05, 0) }, riseTime, Enum.EasingStyle.Linear)
-                        task.wait(riseTime*0.7)
-                        if not running then break end
-                        tw(p, { BackgroundTransparency = 1 }, riseTime*0.3)
-                        up.Completed:Wait()
-                    end
-                end)
-            end
+            -- progreso real con contador
             local dur = cfg.LoadingDuration or 2.0
             local t0 = tick()
             while running and tick() - t0 < dur do
@@ -4836,22 +4850,21 @@ function Aurora:CreateWindow(cfg)
             end
             barFill.Size = UDim2.new(1,0,1,0)
             pctLbl.Text = "100%"
-            tw(ringOuterStroke, { Color = Color3.fromRGB(255,255,255), Thickness = s(4) }, 0.15)
-            tw(glow, { ImageTransparency = 0.12, Size = ss(122,122) }, 0.25)
-            task.wait(0.18)
+            -- cierre elegante
+            tw(glow, { ImageTransparency = 0.25, Size = ss(126,126) }, 0.3)
+            tw(ringStroke, { Thickness = s(3) }, 0.2)
+            task.wait(0.2)
             running = false
-            tw(dim, { BackgroundTransparency = 1 }, 0.4)
+            tw(dim, { BackgroundTransparency = 1 }, 0.45)
             tw(glow, { ImageTransparency = 1 }, 0.35)
-            tw(ringOuterStroke, { Transparency = 1 }, 0.3)
-            tw(ringInnerStroke, { Transparency = 1 }, 0.3)
+            tw(ringStroke, { Transparency = 1 }, 0.3)
             tw(logo, { ImageTransparency = 1 }, 0.3)
             tw(titleLbl, { TextTransparency = 1 }, 0.3)
             tw(subLbl, { TextTransparency = 1 }, 0.3)
             tw(barBG, { BackgroundTransparency = 1 }, 0.3)
             tw(barFill, { BackgroundTransparency = 1 }, 0.3)
             tw(pctLbl, { TextTransparency = 1 }, 0.3)
-            for _, p in ipairs(particles) do tw(p, { BackgroundTransparency = 1 }, 0.3) end
-            task.wait(0.2)
+            task.wait(0.22)
             pcall(function() win:SetVisible(true) end)
             Aurora:PlaySound("Open")
             task.wait(0.5)
