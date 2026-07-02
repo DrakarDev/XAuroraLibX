@@ -6615,6 +6615,8 @@ function KeySystem.new(cfg)
     self.FileName = cfg.FileName or "AuroraKey.txt"
     self.OnSuccess = cfg.OnSuccess or function() end
     self.CustomValidate = cfg.CustomValidate
+    self.ShowExit = cfg.ShowExit ~= false
+    self.OnExit = cfg.OnExit
     local isfile = isfile or function() return false end
     local readfile = readfile or function() return "" end
     local writefile = writefile or function() end
@@ -6638,8 +6640,18 @@ function KeySystem.new(cfg)
     local thm = Aurora.Theme or Aurora.Themes.Dark
     local keyGui = make("ScreenGui", { Name = "AuroraKeySystem", ResetOnSpawn = false, DisplayOrder = 100000 })
     safeParent(keyGui)
+    local _methods = (type(cfg.KeyMethods)=="table" and cfg.KeyMethods) or {}
+    local _links = (type(cfg.Links)=="table" and cfg.Links) or (type(cfg.Buttons)=="table" and cfg.Buttons) or {}
+    local _hasMethods = #_methods > 0
+    local _hasLinks = #_links > 0
+    local selectedLink = self.KeyLink or ""
+    local _frameH = s(280)
+    local _socialY, _methodY
+    if _hasLinks then _socialY = s(252); _frameH = s(252) + s(42) end
+    if _hasMethods then _methodY = _hasLinks and (s(252)+s(42)) or s(252); _frameH = _methodY + s(42) end
+    _frameH = math.max(s(280), _frameH + s(4))
     local mainFrame = make("Frame", {
-        Size = UDim2.fromOffset(s(380), s(280)),
+        Size = UDim2.fromOffset(s(380), _frameH),
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = thm.Background,
@@ -6649,6 +6661,24 @@ function KeySystem.new(cfg)
     createAcrylic(mainFrame)
     make("UICorner", { CornerRadius = sz(16), Parent = mainFrame })
     local mainStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = mainFrame })
+    if self.ShowExit then
+        local exitBtn = make("TextButton", {
+            Size = ss(24,24), AnchorPoint = Vector2.new(1,0), Position = UDim2.new(1,-s(10),0,s(10)),
+            BackgroundColor3 = thm.Element, BackgroundTransparency = 0.3, Text = "", AutoButtonColor = false, ZIndex = 5, Parent = mainFrame,
+        })
+        make("UICorner", { CornerRadius = UDim.new(1,0), Parent = exitBtn })
+        local exitIco = make("ImageLabel", { Size = ss(12,12), AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.5), BackgroundTransparency = 1, ZIndex = 6, Parent = exitBtn })
+        applyIcon(exitIco, "solar/close-linear", thm.SubText)
+        exitBtn.MouseEnter:Connect(function() if _isMobile then return end tw(exitBtn, { BackgroundColor3 = Color3.fromRGB(200,50,50), BackgroundTransparency = 0.1 }, 0.12) end)
+        exitBtn.MouseLeave:Connect(function() if _isMobile then return end tw(exitBtn, { BackgroundColor3 = thm.Element, BackgroundTransparency = 0.3 }, 0.12) end)
+        exitBtn.MouseButton1Click:Connect(function()
+            tw(mainFrame, { Size = UDim2.fromOffset(0,0), BackgroundTransparency = 1 }, 0.25)
+            task.delay(0.26, function()
+                pcall(function() keyGui:Destroy() end)
+                if self.OnExit then pcall(self.OnExit) end
+            end)
+        end)
+    end
     local dragInput, dragStart, startPos
     mainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -6826,11 +6856,11 @@ function KeySystem.new(cfg)
     verifyBtn.MouseButton1Click:Connect(doVerify)
     textBox.FocusLost:Connect(function(enter) if enter then doVerify() end end)
     getBtn.MouseButton1Click:Connect(function()
-        if self.KeyLink ~= "" then
+        if selectedLink ~= "" then
             pcall(function()
                 local setClipboard = setclipboard or toclipboard or set_clipboard
                 if setClipboard then
-                    setClipboard(self.KeyLink)
+                    setClipboard(selectedLink)
                     statusLbl.TextColor3 = thm.AlertInfo
                     statusLbl.Text = "Key link copied to clipboard!"
                 else
@@ -6843,6 +6873,74 @@ function KeySystem.new(cfg)
             statusLbl.Text = "No key link specified!"
         end
     end)
+    if _hasLinks then
+        local socialFrame = make("Frame", { Size = UDim2.new(1,-s(24),0,s(34)), Position = UDim2.new(0,s(12),0,_socialY), BackgroundTransparency = 1, Parent = mainFrame })
+        make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = sz(6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = socialFrame })
+        local n = #_links
+        for i, lk in ipairs(_links) do
+            local isDiscord = string.lower(tostring(lk.Type or lk.Title or "")):find("discord") ~= nil
+            local col = lk.Color or (isDiscord and Color3.fromRGB(88,101,242)) or thm.Element
+            local b = make("TextButton", { Size = UDim2.new(1/n, -s(6), 1, 0), BackgroundColor3 = col, AutoButtonColor = false, Text = "", LayoutOrder = i, Parent = socialFrame })
+            make("UICorner", { CornerRadius = sz(10), Parent = b })
+            local hasIcon = lk.Icon and lk.Icon ~= ""
+            if hasIcon then
+                local ic = make("ImageLabel", { Size = ss(14,14), AnchorPoint = Vector2.new(0,0.5), Position = UDim2.new(0,s(10),0.5,0), BackgroundTransparency = 1, Parent = b })
+                applyIcon(ic, lk.Icon, Color3.fromRGB(255,255,255))
+            end
+            make("TextLabel", { Size = UDim2.new(1, hasIcon and -s(28) or 0, 1, 0), Position = UDim2.new(0, hasIcon and s(28) or 0, 0, 0), BackgroundTransparency = 1, Text = lk.Title or "Link", TextColor3 = Color3.fromRGB(255,255,255), TextSize = fs(11), Font = Enum.Font.GothamBold, TextXAlignment = hasIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center, Parent = b })
+            local baseCol = col
+            b.MouseEnter:Connect(function() if _isMobile then return end tw(b, { BackgroundColor3 = baseCol:Lerp(Color3.new(1,1,1), 0.15) }, 0.12) end)
+            b.MouseLeave:Connect(function() if _isMobile then return end tw(b, { BackgroundColor3 = baseCol }, 0.12) end)
+            b.MouseButton1Click:Connect(function()
+                local link = lk.Link or lk.Url or ""
+                if link ~= "" then
+                    pcall(function()
+                        local setClipboard = setclipboard or toclipboard or set_clipboard
+                        if setClipboard then setClipboard(link) end
+                    end)
+                    statusLbl.TextColor3 = thm.AlertInfo
+                    statusLbl.Text = (lk.Title or "Link").." link copied!"
+                end
+            end)
+        end
+    end
+    if _hasMethods then
+        selectedLink = _methods[1].Link or _methods[1].Url or selectedLink
+        local mdOpen = false
+        local mdField = make("TextButton", { Size = UDim2.new(1,-s(24),0,s(34)), Position = UDim2.new(0,s(12),0,_methodY), BackgroundColor3 = thm.InputBG, AutoButtonColor = false, Text = "", ZIndex = 3, Parent = mainFrame })
+        make("UICorner", { CornerRadius = sz(10), Parent = mdField })
+        make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = mdField })
+        local mdIco = make("ImageLabel", { Size = ss(14,14), AnchorPoint = Vector2.new(0,0.5), Position = UDim2.new(0,s(10),0.5,0), BackgroundTransparency = 1, ZIndex = 4, Parent = mdField })
+        applyIcon(mdIco, "solar/key-linear", thm.Accent)
+        local mdLbl = make("TextLabel", { Size = UDim2.new(1,-s(56),1,0), Position = UDim2.new(0,s(32),0,0), BackgroundTransparency = 1, Text = "Get key via: "..(_methods[1].Name or "Method 1"), TextColor3 = thm.Text, TextSize = fs(12), Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 4, Parent = mdField })
+        local mdArr = make("ImageLabel", { Size = ss(12,12), AnchorPoint = Vector2.new(1,0.5), Position = UDim2.new(1,-s(10),0.5,0), BackgroundTransparency = 1, ZIndex = 4, Parent = mdField })
+        applyIcon(mdArr, "solar/alt-arrow-down-linear", thm.SubText)
+        local mdList = make("Frame", { Size = UDim2.new(1,0,0,0), Position = UDim2.new(0,0,1,s(4)), BackgroundColor3 = thm.Background, ClipsDescendants = true, ZIndex = 40, Parent = mdField })
+        make("UICorner", { CornerRadius = sz(10), Parent = mdList })
+        make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = mdList })
+        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = sz(2), Parent = mdList })
+        make("UIPadding", { PaddingTop = sz(4), PaddingBottom = sz(4), PaddingLeft = sz(4), PaddingRight = sz(4), Parent = mdList })
+        for i, m in ipairs(_methods) do
+            local it = make("TextButton", { Size = UDim2.new(1,0,0,s(28)), BackgroundColor3 = thm.InputBG, BackgroundTransparency = 1, AutoButtonColor = false, Text = "", ZIndex = 41, LayoutOrder = i, Parent = mdList })
+            make("UICorner", { CornerRadius = sz(8), Parent = it })
+            make("TextLabel", { Size = UDim2.new(1,-s(16),1,0), Position = UDim2.new(0,s(10),0,0), BackgroundTransparency = 1, Text = m.Name or ("Method "..i), TextColor3 = thm.SubText, TextSize = fs(11), Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 42, Parent = it })
+            it.MouseEnter:Connect(function() if _isMobile then return end tw(it, { BackgroundTransparency = 0.5 }, 0.1) end)
+            it.MouseLeave:Connect(function() if _isMobile then return end tw(it, { BackgroundTransparency = 1 }, 0.1) end)
+            it.MouseButton1Click:Connect(function()
+                selectedLink = m.Link or m.Url or ""
+                mdLbl.Text = "Get key via: "..(m.Name or ("Method "..i))
+                mdOpen = false
+                tw(mdList, { Size = UDim2.new(1,0,0,0) }, 0.18)
+                tw(mdArr, { Rotation = 0 }, 0.18)
+            end)
+        end
+        mdField.MouseButton1Click:Connect(function()
+            mdOpen = not mdOpen
+            local h = mdOpen and (#_methods*s(30)+s(8)) or 0
+            tw(mdList, { Size = UDim2.new(1,0,0,h) }, 0.2)
+            tw(mdArr, { Rotation = mdOpen and 180 or 0 }, 0.2)
+        end)
+    end
     return self
 end
 function KeySystem.GetHWID()
