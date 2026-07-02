@@ -6791,11 +6791,11 @@ function KeySystem.new(cfg)
     local _hasMethods = #_methods > 0
     local _hasLinks = #_links > 0
     local selectedLink = self.KeyLink or ""
-    local _frameH = s(280)
     local _socialY, _methodY
-    if _hasLinks then _socialY = s(252); _frameH = s(252) + s(42) end
-    if _hasMethods then _methodY = _hasLinks and (s(252)+s(42)) or s(252); _frameH = _methodY + s(42) end
-    _frameH = math.max(s(280), _frameH + s(4))
+    local _y = s(242)
+    if _hasLinks then _socialY = _y; _y = _y + s(42) end
+    if _hasMethods then _methodY = _y; _y = _y + s(42) end
+    local _frameH = math.max(s(256), _y + s(6))
     local mainFrame = make("Frame", {
         Size = UDim2.fromOffset(s(380), _frameH),
         Position = UDim2.fromScale(0.5, 0.5),
@@ -6851,9 +6851,17 @@ function KeySystem.new(cfg)
     keyGui.Destroying:Connect(function()
         pcall(function() changedConn:Disconnect() end)
     end)
+    local logoCircle = make("Frame", {
+        Size = ss(38,38), Position = UDim2.new(0, s(12), 0, s(13)),
+        BackgroundColor3 = thm.Accent, BackgroundTransparency = 0.82, BorderSizePixel = 0, Parent = mainFrame,
+    })
+    make("UICorner", { CornerRadius = UDim.new(1,0), Parent = logoCircle })
+    make("UIStroke", { Color = thm.Accent, Thickness = 1, Transparency = 0.4, Parent = logoCircle })
+    local logoIco = make("ImageLabel", { Size = ss(20,20), AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.5), BackgroundTransparency = 1, Parent = logoCircle })
+    applyIcon(logoIco, cfg.Icon or "solar/key-bold", thm.Accent)
     local titleLbl = make("TextLabel", {
-        Size = UDim2.new(1, -s(24), 0, s(28)),
-        Position = UDim2.new(0, s(12), 0, s(12)),
+        Size = UDim2.new(1, -s(96), 0, s(28)),
+        Position = UDim2.new(0, s(56), 0, s(14)),
         BackgroundTransparency = 1,
         Text = self.Title,
         TextColor3 = thm.Text,
@@ -6863,8 +6871,8 @@ function KeySystem.new(cfg)
         Parent = mainFrame
     })
     local subLbl = make("TextLabel", {
-        Size = UDim2.new(1, -s(24), 0, s(18)),
-        Position = UDim2.new(0, s(12), 0, s(38)),
+        Size = UDim2.new(1, -s(66), 0, s(18)),
+        Position = UDim2.new(0, s(56), 0, s(38)),
         BackgroundTransparency = 1,
         Text = self.SubTitle,
         TextColor3 = thm.SubText,
@@ -6901,9 +6909,11 @@ function KeySystem.new(cfg)
     })
     make("UICorner", { CornerRadius = sz(12), Parent = inputBG })
     local inputStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = inputBG })
+    local keyIco = make("ImageLabel", { Size = ss(14,14), AnchorPoint = Vector2.new(0,0.5), Position = UDim2.new(0, s(11), 0.5, 0), BackgroundTransparency = 1, Parent = inputBG })
+    applyIcon(keyIco, "solar/key-minimalistic-bold", thm.SubText)
     local textBox = make("TextBox", {
-        Size = UDim2.new(1, -s(16), 1, 0),
-        Position = UDim2.new(0, s(8), 0, 0),
+        Size = UDim2.new(1, -s(42), 1, 0),
+        Position = UDim2.new(0, s(34), 0, 0),
         BackgroundTransparency = 1,
         Text = "",
         PlaceholderText = "Enter key here...",
@@ -6946,7 +6956,7 @@ function KeySystem.new(cfg)
     local getStroke = make("UIStroke", { Color = thm.Border, Thickness = 1, Parent = getBtn })
     local statusLbl = make("TextLabel", {
         Size = UDim2.new(1, -s(24), 0, s(20)),
-        Position = UDim2.new(0, s(12), 0, s(230)),
+        Position = UDim2.new(0, s(12), 0, s(218)),
         BackgroundTransparency = 1,
         Text = "",
         TextColor3 = thm.AlertSuccess,
