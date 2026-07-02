@@ -6228,12 +6228,16 @@ function SaveManager:SetFolder(folder) self.Folder=folder; self:BuildFolderTree(
 function SaveManager:BuildFolderTree()
     local gameFolder = self.Folder .. "/settings/" .. tostring(game.PlaceId)
     local paths = {self.Folder, self.Folder .. "/settings", gameFolder}
-    for _, p2 in ipairs(paths) do if not isfolder(p2) then makefolder(p2) end end
+    for _, p2 in ipairs(paths) do
+        pcall(function() if not isfolder(p2) then makefolder(p2) end end)
+    end
+    return gameFolder
 end
-function SaveManager:SetLibrary(lib) self.Library=lib; self.Options=lib.Options end
+function SaveManager:SetLibrary(lib) self.Library=lib; self.Options=lib.Options; pcall(function() self:BuildFolderTree() end) end
 function SaveManager:IgnoreThemeSettings() self:SetIgnoreIndexes({"InterfaceTheme","AcrylicToggle","TransparentToggle","MenuKeybind","AnimationToggle"}) end
 function SaveManager:Save(name)
-    if not name then return false,"no config selected" end
+    if not name or tostring(name):gsub("%s+","") == "" then return false,"no config selected" end
+    self:BuildFolderTree()
     local data={objects={}}
     for idx,opt in next,SaveManager.Options do
         if self.Parser[opt.Type] and not self.Ignore[idx] then
@@ -6243,7 +6247,8 @@ function SaveManager:Save(name)
     local ok,enc=pcall(httpService.JSONEncode,httpService,data)
     if not ok then return false,"encode failed" end
     local path = self.Folder .. "/settings/" .. tostring(game.PlaceId) .. "/" .. name .. ".json"
-    writefile(path,enc)
+    local wok = pcall(writefile, path, enc)
+    if not wok then return false,"write failed (executor sin writefile?)" end
     self.CurrentConfig = name
     return true
 end
@@ -6275,6 +6280,80 @@ function SaveManager:RefreshConfigList()
         end
     end
     return out
+end
+function SaveManager:GetConfigs() return self:RefreshConfigList() end
+function SaveManager:GetPath() return self.Folder .. "/settings/" .. tostring(game.PlaceId) end
+function SaveManager:Delete(name)
+    if not name or name == "" then return false, "no config" end
+    local f = self:GetPath() .. "/" .. name .. ".json"
+    if not isfile(f) then return false, "not found" end
+    local ok = pcall(delfile, f)
+    if not ok then return false, "delete failed" end
+    local ap = self:GetPath() .. "/autoload.txt"
+    pcall(function() if isfile(ap) and readfile(ap) == name then delfile(ap); self.AutoloadConfig = nil end end)
+    if self.CurrentConfig == name then self.CurrentConfig = nil end
+    return true
+end
+function SaveManager:Rename(oldName, newName)
+    if not oldName or not newName or newName:gsub("%s+","")=="" then return false, "invalid" end
+    local srcF = self:GetPath() .. "/" .. oldName .. ".json"
+    if not isfile(srcF) then return false, "not found" end
+    local data = readfile(srcF)
+    local ok = pcall(writefile, self:GetPath() .. "/" .. newName .. ".json", data)
+    if not ok then return false, "write failed" end
+    pcall(delfile, srcF)
+    return true
+end
+function SaveManager:Serialize()
+    local data = {objects={}}
+    for idx,opt in next,SaveManager.Options do
+        if self.Parser[opt.Type] and not self.Ignore[idx] then
+            table.insert(data.objects, self.Parser[opt.Type].Save(idx,opt))
+        end
+    end
+    return httpService:JSONEncode(data)
+end
+function SaveManager:ApplyString(str)
+    if type(str) ~= "string" then return false, "invalid data" end
+    local ok, dec = pcall(httpService.JSONDecode, httpService, str)
+    if not ok or type(dec) ~= "table" or type(dec.objects) ~= "table" then return false, "invalid config data" end
+    for _,opt in next,dec.objects do
+        if self.Parser[opt.type] then task.spawn(function() self.Parser[opt.type].Load(opt.idx,opt) end) end
+    end
+    return true
+end
+function SaveManager:CopyToClipboard()
+    local ok, enc = pcall(function() return self:Serialize() end)
+    if not ok then return false, "encode failed" end
+    local setClipboard = setclipboard or toclipboard or set_clipboard
+    if not setClipboard then return false, "clipboard not supported" end
+    local wok = pcall(setClipboard, enc)
+    if not wok then return false, "clipboard write failed" end
+    return true
+end
+function SaveManager:CopyConfigToClipboard(name)
+    if not name or name == "" then return false, "no config" end
+    local f = self:GetPath() .. "/" .. name .. ".json"
+    if not isfile(f) then return false, "not found" end
+    local setClipboard = setclipboard or toclipboard or set_clipboard
+    if not setClipboard then return false, "clipboard not supported" end
+    local wok = pcall(setClipboard, readfile(f))
+    if not wok then return false, "clipboard write failed" end
+    return true
+end
+function SaveManager:LoadFromClipboard()
+    local getClipboard = getclipboard or get_clipboard or (Clipboard and Clipboard.get)
+    if not getClipboard then return false, "clipboard read not supported" end
+    local ok, str = pcall(getClipboard)
+    if not ok or type(str) ~= "string" or str == "" then return false, "clipboard empty" end
+    return self:ApplyString(str)
+end
+function SaveManager:SetAutoload(name)
+    self:BuildFolderTree()
+    local ap = self.Folder .. "/settings/" .. tostring(game.PlaceId) .. "/autoload.txt"
+    pcall(writefile, ap, tostring(name))
+    self.AutoloadConfig = name
+    return true
 end
 function SaveManager:LoadAutoloadConfig()
     local ap = self.Folder .. "/settings/" .. tostring(game.PlaceId) .. "/autoload.txt"
@@ -6388,67 +6467,134 @@ function SaveManager:RefreshCloudConfigList()
 end
 function SaveManager:BuildConfigSection(sec)
     assert(self.Library, "Must set SaveManager.Library")
-    local nameInput = sec:AddInput("SaveManager_ConfigName", {Title="Config name", Icon="solar/pen-new-round-bold"})
-    local configDropdown = sec:AddDropdown("SaveManager_ConfigList", {Title="Local config list", Values=self:RefreshConfigList(), Icon="solar/list-bold"})
-    sec:AddButton({Title="Create local config", Icon="solar/diskette-bold", Callback=function()
-        local name = nameInput.Value
-        if name:gsub(" ", "") == "" then
-            return self.Library:Notify({Title="Interface", Content="Config loader", SubContent="Invalid name", Duration=7})
-        end
-        local ok, err = self:Save(name)
-        if not ok then
-            return self.Library:Notify({Title="Interface", Content="Config loader", SubContent="Failed: " .. err, Duration=7})
-        end
-        self.Library:Notify({Title="Interface", Content="Config loader", SubContent=string.format("Created local %q", name), Duration=7})
-        configDropdown:Refresh(self:RefreshConfigList())
-        configDropdown:SetValue(nil)
-    end})
-    sec:AddButton({Title="Load local config", Icon="solar/upload-minimalistic-bold", Callback=function()
-        local name = configDropdown.Value
-        local ok, err = self:Load(name)
-        if not ok then
-            return self.Library:Notify({Title="Interface", Content="Config loader", SubContent="Failed: " .. err, Duration=7})
-        end
-        self.Library:Notify({Title="Interface", Content="Config loader", SubContent=string.format("Loaded local %q", name), Duration=7})
-    end})
-    sec:AddButton({Title="Overwrite local config", Icon="solar/refresh-bold", Callback=function()
-        local name = configDropdown.Value
-        local ok, err = self:Save(name)
-        if not ok then
-            return self.Library:Notify({Title="Interface", Content="Config loader", SubContent="Failed: " .. err, Duration=7})
-        end
-        self.Library:Notify({Title="Interface", Content="Config loader", SubContent=string.format("Overwrote local %q", name), Duration=7})
-    end})
-    sec:AddButton({Title="Refresh local list", Icon="solar/restart-bold", Callback=function()
-        configDropdown:Refresh(self:RefreshConfigList())
-        configDropdown:SetValue(nil)
-    end})
-    local autoBtn, _autoPath = nil, self.Folder .. "/settings/" .. tostring(game.PlaceId) .. "/autoload.txt"
-    autoBtn = sec:AddButton({Title="Set as autoload", Icon="solar/star-bold", Description="Current autoload: none", Callback=function()
-        local name = configDropdown.Value
-        if isfile(_autoPath) and readfile(_autoPath) == name then
-            delfile(_autoPath)
-            autoBtn:SetDesc("Current autoload: none")
-            self.Library:Notify({Title="Interface", Content="Config loader", SubContent="Autoload disabled", Duration=7})
-        else
-            if not name or name == "" then
-                return self.Library:Notify({Title="Interface", Content="Config loader", SubContent="No config selected", Duration=7})
-            end
-            writefile(_autoPath, name)
-            autoBtn:SetDesc("Current autoload: " .. name)
-            self.Library:Notify({Title="Interface", Content="Config loader", SubContent=string.format("Set %q to autoload", name), Duration=7})
-        end
-    end})
-    if isfile(_autoPath) then
-        autoBtn:SetDesc("Current autoload: " .. readfile(_autoPath))
+    self:BuildFolderTree()
+    local function notify(msg) self.Library:Notify({Title="Config loader", Content=msg, Type="Info", Duration=5}) end
+    sec:AddSeparator("Local configs")
+    local nameInput = sec:AddInput("SaveManager_ConfigName", {Title="Config name", Placeholder="my config", Icon="solar/pen-new-round-bold"})
+    local configDropdown = sec:AddDropdown("SaveManager_ConfigList", {Title="Saved configs", Values=self:RefreshConfigList(), Icon="solar/list-bold"})
+    local autoloadDropdown
+    local _autoPath = self:GetPath() .. "/autoload.txt"
+    local function _currentAutoload()
+        if isfile(_autoPath) then local n = readfile(_autoPath); if n and n ~= "" then return n end end
+        return "None"
     end
+    local function refreshLists()
+        local cfgs = self:RefreshConfigList()
+        configDropdown:Refresh(cfgs)
+        if autoloadDropdown then
+            local t = {"None"}
+            for _,c in ipairs(cfgs) do table.insert(t, c) end
+            autoloadDropdown:Refresh(t)
+            autoloadDropdown:SetValue(_currentAutoload())
+        end
+    end
+    sec:AddButton({Title="Create config", Icon="solar/diskette-bold", Description="Save current settings as a new config", Callback=function()
+        local name = nameInput.Value
+        if not name or name:gsub("%s+","") == "" then return notify("Invalid name") end
+        local ok, err = self:Save(name)
+        if not ok then return notify("Failed: "..tostring(err)) end
+        notify(string.format("Created %q", name))
+        refreshLists(); configDropdown:SetValue(name)
+    end})
+    sec:AddButton({Title="Load config", Icon="solar/upload-minimalistic-bold", Description="Load the selected config", Callback=function()
+        local name = configDropdown.Value
+        if not name or name == "" then return notify("No config selected") end
+        local ok, err = self:Load(name)
+        if not ok then return notify("Failed: "..tostring(err)) end
+        notify(string.format("Loaded %q", name))
+    end})
+    sec:AddButton({Title="Overwrite config", Icon="solar/refresh-bold", Description="Save current settings over the selected config", Callback=function()
+        local name = configDropdown.Value
+        if not name or name == "" then return notify("No config selected") end
+        local ok, err = self:Save(name)
+        if not ok then return notify("Failed: "..tostring(err)) end
+        notify(string.format("Overwrote %q", name))
+    end})
+    sec:AddButton({Title="Rename config", Icon="solar/pen-2-bold", Description="Rename selected config to the 'Config name' value", Callback=function()
+        local old = configDropdown.Value
+        local new = nameInput.Value
+        if not old or old == "" then return notify("No config selected") end
+        if not new or new:gsub("%s+","") == "" then return notify("Enter a new name first") end
+        local ok, err = self:Rename(old, new)
+        if not ok then return notify("Failed: "..tostring(err)) end
+        notify(string.format("Renamed to %q", new))
+        refreshLists(); configDropdown:SetValue(new)
+    end})
+    sec:AddButton({Title="Delete config", Icon="solar/trash-bin-trash-bold", Description="Delete the selected config", Callback=function()
+        local name = configDropdown.Value
+        if not name or name == "" then return notify("No config selected") end
+        self.Library:Notify({
+            Title = "Delete config", Content = string.format("Delete %q permanently?", name), Type = "Warning", Duration = 0,
+            Buttons = {
+                { Title = "Delete", Callback = function()
+                    local ok, err = self:Delete(name)
+                    if not ok then return notify("Failed: "..tostring(err)) end
+                    notify(string.format("Deleted %q", name))
+                    refreshLists(); configDropdown:SetValue(nil)
+                end },
+                { Title = "Cancel", Callback = function() end },
+            },
+        })
+    end})
+    sec:AddButton({Title="Refresh list", Icon="solar/restart-bold", Description="Reload the config list from the folder", Callback=function()
+        refreshLists(); notify("List refreshed")
+    end})
+    sec:AddSeparator("Auto")
+    autoloadDropdown = sec:AddDropdown("SaveManager_Autoload", {
+        Title = "Auto-load on execute",
+        Description = "Config loaded automatically when the script runs",
+        Values = (function() local t = {"None"} for _,c in ipairs(self:RefreshConfigList()) do table.insert(t, c) end return t end)(),
+        Default = _currentAutoload(),
+        Icon = "solar/star-bold",
+        Callback = function(val)
+            if not val or val == "None" then
+                pcall(function() if isfile(_autoPath) then delfile(_autoPath) end end)
+                self.AutoloadConfig = nil
+                notify("Autoload disabled")
+            else
+                self:SetAutoload(val)
+                notify(string.format("Autoload set to %q", val))
+            end
+        end,
+    })
     sec:AddToggle("SaveManager_Autosave", {
         Title = "Auto-save on change",
+        Description = "Save the current config automatically whenever you change a setting",
         Default = false,
         Callback = function(v)
             self.Autosave = v
+            if v and not self.CurrentConfig then
+                local sel = configDropdown.Value
+                if sel and sel ~= "" then self.CurrentConfig = sel end
+            end
         end
     })
+    sec:AddSeparator("Share (clipboard)")
+    sec:AddButton({Title="Copy current config", Icon="solar/copy-bold", Description="Copy your CURRENT active settings to the clipboard", Callback=function()
+        local ok, err = self:CopyToClipboard()
+        if not ok then return notify("Failed: "..tostring(err)) end
+        notify("Current config copied to clipboard!")
+    end})
+    sec:AddButton({Title="Copy selected config", Icon="solar/clipboard-list-bold", Description="Copy the selected saved config to the clipboard", Callback=function()
+        local name = configDropdown.Value
+        if not name or name == "" then return notify("No config selected") end
+        local ok, err = self:CopyConfigToClipboard(name)
+        if not ok then return notify("Failed: "..tostring(err)) end
+        notify(string.format("Copied %q to clipboard!", name))
+    end})
+    sec:AddButton({Title="Load from clipboard", Icon="solar/clipboard-check-bold", Description="Apply a config straight from your clipboard", Callback=function()
+        local ok, err = self:LoadFromClipboard()
+        if not ok then return notify("Failed: "..tostring(err).." (try pasting below)") end
+        notify("Config loaded from clipboard!")
+    end})
+    local pasteInput = sec:AddInput("SaveManager_Paste", {Title="Or paste a config here", Placeholder="paste config text...", Icon="solar/import-bold"})
+    sec:AddButton({Title="Import pasted config", Icon="solar/download-minimalistic-bold", Description="Apply the config text pasted above", Callback=function()
+        local str = pasteInput.Value
+        if not str or str:gsub("%s+","") == "" then return notify("Paste a config first") end
+        local ok, err = self:ApplyString(str)
+        if not ok then return notify("Failed: "..tostring(err)) end
+        notify("Config imported!")
+    end})
     sec:AddSeparator("Cloud configs")
     local cloudInfo = sec:AddParagraph({Title = "Cloud Config Info", Content = "Select a config to view details"})
     local cloudDropdown
