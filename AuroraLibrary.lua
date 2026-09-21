@@ -366,7 +366,12 @@ local function autoRegisterThemeProps(inst, props)
     end
 end
 local function make(class, props)
-    local inst = Instance.new(class)
+    local ok, inst = pcall(Instance.new, class)
+    if not ok and class == "CanvasGroup" then
+        Aurora.FadeIn = false
+        ok, inst = pcall(Instance.new, "Frame")
+    end
+    if not ok then inst = Instance.new("Frame") end
     if props then
         for k, v in pairs(props) do
             if k ~= "Parent" then pcall(function() inst[k] = v end) end
