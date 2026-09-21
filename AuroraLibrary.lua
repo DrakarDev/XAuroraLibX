@@ -406,13 +406,10 @@ local function _registerElement(title, frame, tabRef, subTabRef)
     end)
 end
 local function safeParent(gui)
-    local ok = pcall(function()
-        if syn and syn.protect_gui then syn.protect_gui(gui) end
-        gui.Parent = CoreGui
-    end)
-    if not ok or not gui.Parent then
-        pcall(function() gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end)
-    end
+    -- Controls added by game callbacks must not inherit CoreGui permissions.
+    local player = Players.LocalPlayer or Players.PlayerAdded:Wait()
+    local playerGui = player:WaitForChild("PlayerGui")
+    gui.Parent = playerGui
 end
 local function fitMobileCard(gui, card, width, height)
     if not isMobileDevice() then return end
